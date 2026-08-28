@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Agenda da Alice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1E3A5F;
+    --navy-light:#8FB3D9;
+    --paper:#EEF1F6;
+    --ink:#2B2F38;
+    --muted:#5C6670;
+    --border:#D8DEE8;
+    --urgent-bg:#FDECEC;
+    --urgent-fg:#C24444;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    font-family:'Work Sans','Segoe UI',sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .cover{
+    position:relative;
+    background:var(--navy);
+    overflow:hidden;
+    padding:32px 24px 32px 56px;
+  }
+  @media(min-width:640px){ .cover{ padding:40px 40px 40px 64px; } }
+  .cover::before{
+    content:"";
+    position:absolute; inset:0;
+    opacity:.06;
+    background-image:repeating-linear-gradient(180deg, transparent, transparent 27px, #fff 28px);
+  }
+  .spiral{
+    position:absolute; left:0; top:0; bottom:0; width:32px;
+    display:flex; flex-direction:column; justify-content:space-evenly; align-items:center;
+  }
+  .spiral span{
+    width:14px; height:14px; border-radius:50%;
+    background:var(--paper); opacity:.85;
+  }
+  .eyebrow{
+    position:relative;
+    text-transform:uppercase; letter-spacing:.25em; font-size:12px;
+    color:var(--navy-light); font-family:'JetBrains Mono',monospace;
+    margin:0 0 8px;
+  }
+  h1{
+    position:relative;
+    font-family:'Baloo 2',sans-serif; font-weight:800;
+    color:#fff; font-size:32px; margin:0 0 4px;
+  }
+  @media(min-width:640px){ h1{ font-size:44px; } }
+  .sub{
+    position:relative;
+    color:rgba(219,234,254,.8); font-size:14px; max-width:420px; margin:0;
+  }
+  .stats{
+    position:relative;
+    display:flex; flex-wrap:wrap; gap:12px; margin-top:24px;
+  }
+  .stat{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 12px; border-radius:12px;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+  }
+  .stat.warn{ background:rgba(194,68,68,.25); border-color:rgba(255,150,150,.5); }
+  .stat b{ font-family:'JetBrains Mono',monospace; color:#fff; font-size:18px; }
+  .stat span{ color:rgba(219,234,254,.7); font-size:12px; }
+  .stat.warn b{ color:#FFB4B4; }
+  .stat-icon{ font-size:14px; }
+
+  .tabs{ padding:20px 16px 0; display:flex; flex-wrap:wrap; gap:8px; }
+  @media(min-width:640px){ .tabs{ padding:24px 40px 0; } }
+  .chip{
+    font-size:14px; font-weight:500; padding:6px 14px; border-radius:999px;
+    border:1.5px solid var(--border); background:#fff; color:var(--muted);
+    cursor:pointer; transition:.15s;
+  }
+  .chip.active{ color:#fff; border-color:transparent; }
+
+  .list-wrap{ padding:20px 16px 60px; max-width:720px; }
+  @media(min-width:640px){ .list-wrap{ padding:24px 40px 60px; } }
+  .list-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .count{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .add-btn{
+    display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600;
+    padding:8px 14px; border-radius:999px; color:#fff; background:var(--navy);
+    border:none; cursor:pointer;
+  }
+  .add-btn:active{ transform:scale(.96); }
+
+  .form{
+    margin-bottom:20px; padding:16px; border-radius:16px; background:#fff;
+    border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  .subject-picker{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .subject-chip{
+    font-size:12px; padding:4px 10px; border-radius:999px; font-weight:500;
+    background:var(--paper); color:var(--muted); border:none; cursor:pointer;
+  }
+  .subject-chip.active{ color:#fff; }
+  .form input[type=text]{
+    width:100%; font-size:14px; padding:10px 12px; border-radius:10px;
+    border:1px solid var(--border); margin-bottom:10px; font-family:inherit;
+  }
+  .form-row{ display:flex; align-items:center; gap:8px; }
+  .form input[type=date]{
+    font-size:14px; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+  }
+  .save-btn{
+    margin-left:auto; font-size:14px; font-weight:600; padding:9px 18px;
+    border-radius:10px; color:#fff; border:none; cursor:pointer;
+  }
+
+  .card{
+    display:flex; align-items:stretch; background:#fff; border-radius:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05); overflow:hidden; margin-bottom:10px;
+    transition:opacity .2s;
+  }
+  .card.done{ opacity:.55; }
+  .tab-color{ width:11px; flex-shrink:0; }
+  .card-body{ display:flex; align-items:center; gap:12px; padding:12px 16px; flex:1; min-width:0; }
+  .checkbox{
+    width:24px; height:24px; border-radius:6px; border:2px solid var(--border);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; background:transparent; padding:0;
+  }
+  .checkbox svg{ display:none; width:14px; height:14px; }
+  .checkbox.checked svg{ display:block; }
+  .card-text{ min-width:0; flex:1; }
+  .subject-label{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.03em; margin:0 0 2px;
+  }
+  .task-text{ font-size:14px; line-height:1.4; margin:0; color:var(--ink); }
+  .task-text.strike{ text-decoration:line-through; }
+  .due{
+    flex-shrink:0; text-align:center; padding:6px 10px; border-radius:10px;
+    background:var(--paper); color:var(--muted);
+  }
+  .due.urgent{ background:var(--urgent-bg); color:var(--urgent-fg); }
+  .due-label{ font-family:'JetBrains Mono',monospace; font-size:10px; }
+  .due-date{ font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; }
+  .empty{ text-align:center; padding:40px 0; color:#8B94A3; font-size:14px; }
+  .footer-note{
+    text-align:center; font-size:12px; color:#9AA3B0; padding:0 16px 30px;
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="spiral">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <p class="eyebrow">7º ano · Turma 71M · CSVP</p>
+  <h1>Agenda da Alice</h1>
+  <p class="sub">Tudo que sai do Google Classroom cai aqui, organizado por matéria.</p>
+  <div class="stats" id="stats"></div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="list-wrap">
+  <div class="list-head">
+    <span class="count" id="count">0 tarefas</span>
+    <button class="add-btn" id="toggleForm">+ Adicionar</button>
+  </div>
+
+  <div class="form" id="form" style="display:none">
+    <div class="subject-picker" id="subjectPicker"></div>
+    <input type="text" id="taskText" placeholder="O que ela precisa fazer?">
+    <div class="form-row">
+      <input type="date" id="taskDate">
+      <button class="save-btn" id="saveBtn">Salvar</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<p class="footer-note">Salvo automaticamente neste aparelho · Agenda da Alice · CSVP</p>
+
+<script>
+const SUBJECTS = {
+  "Matemática": "#2F7D5C", "Português": "#2B5FA5", "Redação": "#B5468B",
+  "História": "#B8792E", "Geografia": "#1E8E8E", "Ciências": "#7A4FB5",
+  "Inglês": "#C24444", "Inglês Projeto": "#C24444", "Ensino Religioso": "#5C6670"
+};
+
+const SEED = [
+  { id:"7", subject:"História", text:"Sábado letivo: apresentação do Projeto Detetives da História (vir caracterizada)", due:"2026-09-26", done:false },
+  { id:"6", subject:"História", text:"Montar maquete do invento/obra (caixa de sapato) + trazer mínimo 3 figurinhas de cada obra/invento pro álbum", due:"2026-09-16", done:false },
+  { id:"5", subject:"História", text:"Obra sorteada: A Virgem das Rochas (com Helena e Lorena). Escrever texto em 1ª pessoa no caderno (mín. 15 linhas)", due:"2026-09-09", done:false },
+  { id:"1", subject:"História", text:"Projeto Detetives da História: pesquisar invenção/obra sorteada de Leonardo da Vinci", due:"2026-09-01", done:false },
+  { id:"2", subject:"Geografia", text:"Atividade do livro pág. 40 e 41 (gráficos) — folha A4, vale 1,0 ponto", due:"2026-08-28", done:false },
+  { id:"3", subject:"Matemática", text:"Correção pág. 200 nº 15,16 e pág. 201 nº 1,2,3,4", due:"2026-08-26", done:false },
+  { id:"4", subject:"Redação", text:"Ler crônicas do livro \"Um pé de milho\": Dia de cachoeiro, Nomes, Da praia", due:"2026-08-26", done:false },
+  { id:"8", subject:"Matemática", text:"Inequação 1º grau: pág. 200 nº 14 + folha Resolução de problemas", due:"2026-08-25", done:true },
+  { id:"9", subject:"Português", text:"Revisar para prova de 6,0 pontos", due:"2026-08-20", done:true }
+];
+
+const STORAGE_KEY = "agenda-alice-homework-v1";
+let items = load();
+let filter = "Todas";
+let formOpen = false;
+let draftSubject = "Matemática";
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return SEED;
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+function subjectColor(s){ return SUBJECTS[s] || "#5C6670"; }
+function formatDate(iso){
+  if(!iso) return "";
+  const [y,m,d] = iso.split("-");
+  return d+"/"+m;
+}
+function daysUntil(iso){
+  if(!iso) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(iso+"T00:00:00");
+  return Math.round((target-today)/86400000);
+}
+
+function render(){
+  const sorted = [...items].sort((a,b)=>(b.due||"").localeCompare(a.due||""));
+  const filtered = filter==="Todas" ? sorted : sorted.filter(i=>i.subject===filter);
+  const subjectsInUse = [...new Set(items.map(i=>i.subject))];
+  const pending = items.filter(i=>!i.done);
+  const dueSoon = pending.filter(i=>{ const d=daysUntil(i.due); return d!==null && d<=3; });
+
+  // stats
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><span class="stat-icon">📘</span><b>${pending.length}</b><span>pendentes</span></div>
+    <div class="stat ${dueSoon.length>0?'warn':''}"><span class="stat-icon">🔥</span><b>${dueSoon.length}</b><span>prazo em 3 dias</span></div>
+    <div class="stat"><span class="stat-icon">🎉</span><b>${items.filter(i=>i.done).length}</b><span>concluídas</span></div>
+  `;
+
+  // tabs
+  const tabsEl = document.getElementById("tabs");
+  const allTabs = ["Todas", ...subjectsInUse];
+  tabsEl.innerHTML = allTabs.map(s=>{
+    const active = filter===s;
+    const color = s==="Todas" ? "#1E3A5F" : subjectColor(s);
+    return `<button class="chip ${active?'active':''}" style="${active?`background:${color}`:''}" data-subject="${s}">${s}</button>`;
+  }).join("");
+  tabsEl.querySelectorAll(".chip").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ filter = btn.dataset.subject; render(); });
+  });
+
+  document.getElementById("count").textContent = filtered.length + (filtered.length===1?" tarefa":" tarefas");
+
+  // list
+  const listEl = document.getElementById("list");
+  if(filtered.length===0){
+    listEl.innerHTML = `<p class="empty">Nada por aqui ainda.</p>`;
+  } else {
+    listEl.innerHTML = filtered.map(item=>{
+      const color = subjectColor(item.subject);
+      const d = daysUntil(item.due);
+      const urgent = !item.done && d!==null && d<=3;
+      return `
+      <div class="card ${item.done?'done':''}">
+        <div class="tab-color" style="background:${color}"></div>
+        <div class="card-body">
+          <button class="checkbox ${item.done?'checked':''}" style="${item.done?`border-color:${color};background:${color}`:''}" data-id="${item.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+          <div class="card-text">
+            <p class="subject-label" style="color:${color}">${item.subject}</p>
+            <p class="task-text ${item.done?'strike':''}">${item.text}</p>
+          </div>
+          ${item.due ? `
+          <div class="due ${urgent?'urgent':''}">
+            <div class="due-label">${urgent?'⏱ ':''}PRAZO</div>
+            <div class="due-date">${formatDate(item.due)}</div>
+          </div>` : ''}
+        </div>
+      </div>`;
+    }).join("");
+    listEl.querySelectorAll(".checkbox").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.dataset.id;
+        items = items.map(i=> i.id===id ? {...i, done:!i.done} : i);
+        save(); render();
+      });
+    });
+  }
+
+  // subject picker in form
+  const picker = document.getElementById("subjectPicker");
+  picker.innerHTML = Object.keys(SUBJECTS).map(s=>{
+    const active = draftSubject===s;
+    return `<button class="subject-chip ${active?'active':''}" style="${active?`background:${subjectColor(s)}`:''}" data-subject="${s}">${s}</button>`;
+  }).join("");
+  picker.querySelectorAll(".subject-chip").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ draftSubject = btn.dataset.subject; render(); });
+  });
+}
+
+document.getElementById("toggleForm").addEventListener("click", ()=>{
+  formOpen = !formOpen;
+  document.getElementById("form").style.display = formOpen ? "block" : "none";
+  document.getElementById("toggleForm").textContent = formOpen ? "✕ Cancelar" : "+ Adicionar";
+});
+
+document.getElementById("saveBtn").addEventListener("click", ()=>{
+  const text = document.getElementById("taskText").value.trim();
+  const due = document.getElementById("taskDate").value;
+  if(!text) return;
+  items = [{ id:String(Date.now()), subject:draftSubject, text, due, done:false }, ...items];
+  save();
+  document.getElementById("taskText").value = "";
+  document.getElementById("taskDate").value = "";
+  formOpen = false;
+  document.getElementById("form").style.display = "none";
+  document.getElementById("toggleForm").textContent = "+ Adicionar";
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
