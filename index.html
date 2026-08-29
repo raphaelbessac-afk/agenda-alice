@@ -77,6 +77,18 @@
   .stat.warn b{ color:#FFB4B4; }
   .stat-icon{ font-size:14px; }
 
+  .comunicados-btn{
+    position:relative;
+    display:inline-flex; align-items:center; gap:8px;
+    margin-top:16px;
+    padding:10px 18px; border-radius:12px;
+    background:#C9962C; color:#fff; border:2px solid transparent;
+    font-size:14px; font-weight:700; font-family:'Work Sans','Segoe UI',sans-serif;
+    cursor:pointer; box-shadow:0 2px 10px rgba(201,150,44,.4);
+    transition:.15s;
+  }
+  .comunicados-btn.active{ background:var(--navy); border-color:#C9962C; }
+
   .tabs{ padding:20px 16px 0; display:flex; flex-wrap:wrap; gap:8px; }
   @media(min-width:640px){ .tabs{ padding:24px 40px 0; } }
   .chip{
@@ -165,6 +177,7 @@
   <p class="eyebrow">7º ano · Turma 71M · CSVP</p>
   <h1>Agenda da Alice</h1>
   <p class="sub">Tudo que sai do Google Classroom cai aqui, organizado por matéria.</p>
+  <button class="comunicados-btn" id="comunicadosBtn">📢 Comunicados</button>
   <div class="stats" id="stats"></div>
 </div>
 
@@ -242,17 +255,22 @@ function daysUntil(iso){
 
 function render(){
   const sorted = [...items].sort((a,b)=>(b.due||"").localeCompare(a.due||""));
-  const filtered = filter==="Todas" ? sorted : sorted.filter(i=>i.subject===filter);
-  const subjectsInUse = [...new Set(items.map(i=>i.subject))];
-  const pending = items.filter(i=>!i.done);
+  const homework = sorted.filter(i=>i.subject!=="Comunicados");
+  const comunicados = sorted.filter(i=>i.subject==="Comunicados");
+  const filtered = filter==="Comunicados" ? comunicados : (filter==="Todas" ? homework : homework.filter(i=>i.subject===filter));
+  const subjectsInUse = [...new Set(homework.map(i=>i.subject))];
+  const pending = homework.filter(i=>!i.done);
   const dueSoon = pending.filter(i=>{ const d=daysUntil(i.due); return d!==null && d<=3; });
 
   // stats
   document.getElementById("stats").innerHTML = `
     <div class="stat"><span class="stat-icon">📘</span><b>${pending.length}</b><span>pendentes</span></div>
     <div class="stat ${dueSoon.length>0?'warn':''}"><span class="stat-icon">🔥</span><b>${dueSoon.length}</b><span>prazo em 3 dias</span></div>
-    <div class="stat"><span class="stat-icon">🎉</span><b>${items.filter(i=>i.done).length}</b><span>concluídas</span></div>
+    <div class="stat"><span class="stat-icon">🎉</span><b>${homework.filter(i=>i.done).length}</b><span>concluídas</span></div>
   `;
+
+  // comunicados button
+  document.getElementById("comunicadosBtn").classList.toggle("active", filter==="Comunicados");
 
   // tabs
   const tabsEl = document.getElementById("tabs");
@@ -266,7 +284,8 @@ function render(){
     btn.addEventListener("click", ()=>{ filter = btn.dataset.subject; render(); });
   });
 
-  document.getElementById("count").textContent = filtered.length + (filtered.length===1?" tarefa":" tarefas");
+  const unit = filter==="Comunicados" ? (filtered.length===1?" comunicado":" comunicados") : (filtered.length===1?" tarefa":" tarefas");
+  document.getElementById("count").textContent = filtered.length + unit;
 
   // list
   const listEl = document.getElementById("list");
@@ -277,13 +296,14 @@ function render(){
       const color = subjectColor(item.subject);
       const d = daysUntil(item.due);
       const urgent = !item.done && d!==null && d<=3;
+      const isComunicado = item.subject==="Comunicados";
       return `
       <div class="card ${item.done?'done':''}">
         <div class="tab-color" style="background:${color}"></div>
         <div class="card-body">
-          <button class="checkbox ${item.done?'checked':''}" style="${item.done?`border-color:${color};background:${color}`:''}" data-id="${item.id}">
+          ${isComunicado ? '' : `<button class="checkbox ${item.done?'checked':''}" style="${item.done?`border-color:${color};background:${color}`:''}" data-id="${item.id}">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </button>
+          </button>`}
           <div class="card-text">
             <p class="subject-label" style="color:${color}">${item.subject}</p>
             <p class="task-text ${item.done?'strike':''}">${item.text}</p>
@@ -315,6 +335,11 @@ function render(){
     btn.addEventListener("click", ()=>{ draftSubject = btn.dataset.subject; render(); });
   });
 }
+
+document.getElementById("comunicadosBtn").addEventListener("click", ()=>{
+  filter = filter==="Comunicados" ? "Todas" : "Comunicados";
+  render();
+});
 
 document.getElementById("toggleForm").addEventListener("click", ()=>{
   formOpen = !formOpen;
