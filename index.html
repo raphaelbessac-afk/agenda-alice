@@ -213,9 +213,24 @@
   <div id="list"></div>
 </div>
 
-<p class="footer-note">Salvo automaticamente neste aparelho · Agenda da Alice · CSVP</p>
+<p class="footer-note">Sincronizado em tempo real · Agenda da Alice · CSVP</p>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAosQWWKXlpLfKgqJD_x89owqyrhAptotk",
+  authDomain: "agenda-alice-22376.firebaseapp.com",
+  projectId: "agenda-alice-22376",
+  storageBucket: "agenda-alice-22376.firebasestorage.app",
+  messagingSenderId: "565707167456",
+  appId: "1:565707167456:web:06715d1b795173663aa285"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const stateRef = doc(db, "agenda", "alice");
+
 const SUBJECTS = {
   "Matemática": "#2F7D5C", "Português": "#2B5FA5", "Redação": "#B5468B",
   "História": "#B8792E", "Geografia": "#1E8E8E", "Ciências": "#7A4FB5",
@@ -241,27 +256,43 @@ const SEED = [
   { id:"9", subject:"Português", text:"Revisar para prova de 6,0 pontos", due:"2026-08-20", done:true }
 ];
 
-const STORAGE_KEY = "agenda-alice-homework-v1";
-let items = load();
+const STORAGE_KEY = "agenda-alice-shared-cache-v1";
+
+function loadCache(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { doneIds: [], addedItems: [] };
+}
+function saveCache(state){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function computeItems(state){
+  const doneSet = new Set(state.doneIds || []);
+  const merged = SEED.map(i => doneSet.has(i.id) ? {...i, done:true} : i);
+  const added = (state.addedItems || []).map(i => ({...i, done: doneSet.has(i.id)}));
+  return [...added, ...merged];
+}
+
+let sharedState = loadCache();
+let items = computeItems(sharedState);
 let filter = "Todas";
 let formOpen = false;
 let draftSubject = "Matemática";
 
-function load(){
-  let stored = [];
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) stored = JSON.parse(raw);
-  }catch(e){}
-  const seedIds = new Set(SEED.map(i=>i.id));
-  const doneIds = new Set(stored.filter(i=>seedIds.has(i.id) && i.done).map(i=>i.id));
-  const merged = SEED.map(i => doneIds.has(i.id) ? {...i, done:true} : i);
-  const addedByAlice = stored.filter(i=>!seedIds.has(i.id));
-  return [...addedByAlice, ...merged];
-}
-function save(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-}
+onSnapshot(stateRef, (snap)=>{
+  if(snap.exists()){
+    sharedState = snap.data();
+  } else {
+    sharedState = { doneIds: [], addedItems: [] };
+    setDoc(stateRef, sharedState).catch(err=>console.error("Falha ao criar estado inicial:", err));
+  }
+  saveCache(sharedState);
+  items = computeItems(sharedState);
+  render();
+}, (err)=>{ console.error("Falha ao sincronizar com o Firestore:", err); });
+
 function subjectColor(s){ return SUBJECTS[s] || "#5C6670"; }
 function formatDate(iso){
   if(!iso) return "";
@@ -341,8 +372,16 @@ function render(){
     listEl.querySelectorAll(".checkbox").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const id = btn.dataset.id;
-        items = items.map(i=> i.id===id ? {...i, done:!i.done} : i);
-        save(); render();
+        const wasDone = (sharedState.doneIds || []).includes(id);
+        sharedState = {...sharedState, doneIds: wasDone
+          ? (sharedState.doneIds || []).filter(x=>x!==id)
+          : [...(sharedState.doneIds || []), id]
+        };
+        saveCache(sharedState);
+        items = computeItems(sharedState);
+        render();
+        setDoc(stateRef, { doneIds: wasDone ? arrayRemove(id) : arrayUnion(id) }, { merge:true })
+          .catch(err=>console.error("Falha ao salvar conclusão:", err));
       });
     });
   }
@@ -371,16 +410,20 @@ document.getElementById("toggleForm").addEventListener("click", ()=>{
 
 document.getElementById("saveBtn").addEventListener("click", ()=>{
   const text = document.getElementById("taskText").value.trim();
-  const due = document.getElementById("taskDate").value;
+  const due = document.getElementById("taskDate").value || null;
   if(!text) return;
-  items = [{ id:String(Date.now()), subject:draftSubject, text, due, done:false }, ...items];
-  save();
+  const newItem = { id:String(Date.now()), subject:draftSubject, text, due };
+  sharedState = {...sharedState, addedItems: [newItem, ...(sharedState.addedItems || [])]};
+  saveCache(sharedState);
+  items = computeItems(sharedState);
   document.getElementById("taskText").value = "";
   document.getElementById("taskDate").value = "";
   formOpen = false;
   document.getElementById("form").style.display = "none";
   document.getElementById("toggleForm").textContent = "+ Adicionar";
   render();
+  setDoc(stateRef, { addedItems: arrayUnion(newItem) }, { merge:true })
+    .catch(err=>console.error("Falha ao salvar item novo:", err));
 });
 
 render();
