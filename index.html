@@ -248,11 +248,16 @@ let formOpen = false;
 let draftSubject = "Matemática";
 
 function load(){
+  let stored = [];
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) return JSON.parse(raw);
+    if(raw) stored = JSON.parse(raw);
   }catch(e){}
-  return SEED;
+  const seedIds = new Set(SEED.map(i=>i.id));
+  const doneIds = new Set(stored.filter(i=>seedIds.has(i.id) && i.done).map(i=>i.id));
+  const merged = SEED.map(i => doneIds.has(i.id) ? {...i, done:true} : i);
+  const addedByAlice = stored.filter(i=>!seedIds.has(i.id));
+  return [...addedByAlice, ...merged];
 }
 function save(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
