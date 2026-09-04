@@ -281,8 +281,9 @@ function saveCache(state){
 function computeItems(state){
   const doneSet = new Set(state.doneIds || []);
   const merged = SEED.map(i => doneSet.has(i.id) ? {...i, done:true} : i);
+  const classroom = (state.classroomItems || []).map(i => ({...i, done: doneSet.has(i.id)}));
   const added = (state.addedItems || []).map(i => ({...i, done: doneSet.has(i.id)}));
-  return [...added, ...merged];
+  return [...added, ...classroom, ...merged];
 }
 
 let sharedState = loadCache();
