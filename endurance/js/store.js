@@ -1,0 +1,60 @@
+// Persistência local (localStorage). Tudo fica só no aparelho.
+import { DEFAULT_EXAMS } from './rules.js';
+import { clone } from './utils.js';
+
+const KEY = 'endurance:v1';
+
+export function fresh() {
+  return {
+    v: 1,
+    rev: 0,
+    setup: null, // { startDate, setupDate }
+    rules: {}, // { 'AAAA-MM': regras que valem a partir desse mês }
+    days: {}, // { 'AAAA-MM-DD': { off: {id: bool}, c: {id: n}, joker, note } }
+    closings: {}, // { 'AAAA-MM': { balance, spent, note, closedAt } }
+    goal: null, // { name, amount }
+    exams: clone(DEFAULT_EXAMS),
+    strava: {},
+    seenMedals: {},
+    celebrated: {},
+    lastBackup: null,
+    hideInstall: false,
+  };
+}
+
+export function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) return migrate(JSON.parse(raw));
+  } catch (e) {
+    console.warn('Falha ao carregar dados', e);
+  }
+  return fresh();
+}
+
+export function save(S) {
+  S.rev = (S.rev || 0) + 1;
+  try {
+    localStorage.setItem(KEY, JSON.stringify(S));
+    return true;
+  } catch (e) {
+    console.warn('Falha ao salvar', e);
+    return false;
+  }
+}
+
+export function replace(data) {
+  const S = migrate(data);
+  localStorage.setItem(KEY, JSON.stringify(S));
+  return S;
+}
+
+export function wipe() {
+  localStorage.removeItem(KEY);
+}
+
+function migrate(s) {
+  const f = fresh();
+  for (const k of Object.keys(f)) if (!(k in s)) s[k] = f[k];
+  return s;
+}
