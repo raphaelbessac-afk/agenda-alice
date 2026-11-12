@@ -60,5 +60,16 @@ export function wipe() {
 function migrate(s) {
   const f = fresh();
   for (const k of Object.keys(f)) if (!(k in s)) s[k] = f[k];
+  s.mig = s.mig || {};
+  // v1.1: corrida passa de domingo para sexta (seg, qua, sex, sáb)
+  if (!s.mig.runFri) {
+    for (const r of Object.values(s.rules || {})) {
+      const run = (r.recurring || []).find((h) => h.id === 'run');
+      if (run && [...run.days].sort().join() === '0,1,3,6') run.days = [1, 3, 5, 6];
+    }
+    const rem = (s.reminders || []).find((x) => x.id === 'run');
+    if (rem && rem.days === 'SA,SU,MO,WE') rem.days = 'FR,SA,MO,WE';
+    s.mig.runFri = true;
+  }
   return s;
 }

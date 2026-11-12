@@ -182,7 +182,7 @@ export function renderSettings(app) {
     <li>Saldo que sobra não acumula. <b>Saldo negativo</b> é descontado do mês seguinte.</li>
     <li>Contando desde ${fmtDateLong(S.setup.startDate)}.</li></ul></section>`;
   html += `<section class="card danger-zone"><button class="btn ghost block danger" data-act="reset">Apagar tudo e recomeçar</button></section>`;
-  html += `<p class="ver">Endurance · v1.0</p>`;
+  html += `<p class="ver">Endurance · v1.1</p>`;
   return html;
 }
 
