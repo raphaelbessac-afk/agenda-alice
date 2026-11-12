@@ -32,10 +32,14 @@ export function load() {
   return fresh();
 }
 
+let onSave = null;
+export const setOnSave = (fn) => (onSave = fn);
+
 export function save(S) {
   S.rev = (S.rev || 0) + 1;
   try {
     localStorage.setItem(KEY, JSON.stringify(S));
+    if (onSave) onSave();
     return true;
   } catch (e) {
     console.warn('Falha ao salvar', e);

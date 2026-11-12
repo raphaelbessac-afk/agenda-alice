@@ -5,6 +5,7 @@ import { REMINDERS, buildICS, openICS, deliverFile } from '../files.js';
 import * as Strava from '../strava.js';
 import { toast, confetti } from '../fx.js';
 import { replace, wipe } from '../store.js';
+import { cloudSection } from './cloudui.js';
 
 const nextYm = () => addMonths(ymOf(todayISO()), 1);
 
@@ -154,6 +155,7 @@ export function renderSettings(app) {
   const lastB = S.lastBackup ? new Date(S.lastBackup).toLocaleDateString('pt-BR') : 'nunca';
   const rem = S.reminders || REMINDERS;
   let html = `<header class="top"><h1>Ajustes</h1></header>`;
+  html += `<section class="card" id="nuvem"><h3>☁️ Nuvem</h3>${cloudSection(app)}</section>`;
   html += `<section class="card"><h3>💰 Valores deste mês</h3>${valuesTable(S)}<button class="btn ghost block" data-act="ed-open">✏️ Editar regras e hábitos</button></section>`;
   html += `<section class="card"><h3>🎯 Recompensa do mês</h3><p class="hint">No que você quer gastar o prêmio? Aparece no painel com o progresso.</p>
     <div class="form"><label class="fl"><span>O que</span><input data-in="goal" data-k="name" placeholder="Ex.: tênis novo" value="${esc(goal.name)}"></label>
@@ -170,7 +172,7 @@ export function renderSettings(app) {
       .map((r, i) => `<label class="rem"><input type="checkbox" data-in="rem" data-i="${i}" data-k="on" ${r.on ? 'checked' : ''}><span>${esc(r.title)}</span><input type="time" data-in="rem" data-i="${i}" data-k="time" value="${r.time}"></label>`)
       .join('')}</div>
     <button class="btn primary block" data-act="ics">📅 Adicionar ao Calendário</button></section>`;
-  html += `<section class="card"><h3>💾 Backup</h3><p class="hint">Seus dados ficam só neste iPhone. Faça um backup de vez em quando (salve em Arquivos ou iCloud Drive). Último: <b>${lastB}</b>.</p>
+  html += `<section class="card"><h3>💾 Backup</h3><p class="hint">Cópia em arquivo, extra à nuvem (salve em Arquivos ou iCloud Drive). Último: <b>${lastB}</b>.</p>
     <div class="row2"><button class="btn primary" data-act="backup">Exportar</button><label class="btn ghost">Importar<input type="file" accept="application/json,.json" data-in="import" hidden></label></div></section>`;
   html += `<section class="card"><h3>ℹ️ Como funciona</h3><ul class="how">
     <li>Corrida, academia e salada <b>já vêm marcadas</b>. Toque para desmarcar o que não fez.</li>
@@ -332,6 +334,7 @@ export const settingsInputs = {
         if (!data.setup || !data.rules) throw new Error('Arquivo inválido');
         if (!confirm('Substituir os dados atuais por este backup?')) return;
         app.S = replace(data);
+        app.saveQuiet(); // envia para a nuvem, se conectado
         toast('✅ Backup restaurado.');
         confetti({ count: 60, coins: false });
         app.render();

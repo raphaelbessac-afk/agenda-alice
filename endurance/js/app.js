@@ -1,5 +1,7 @@
 // Endurance: orquestração, navegação, ações e celebrações.
-import { load, save } from './store.js';
+import { load, save, replace, setOnSave } from './store.js';
+import * as Cloud from './cloud.js';
+import { cloudActions, loginSheet, conflictSheet, statusLine, cloudSection } from './views/cloudui.js';
 import { todayISO, ymOf, brl, cap, monthName, esc } from './utils.js';
 import { monthSummary, timeline } from './engine.js';
 import { computeMedals, MEDALS } from './medals.js';
@@ -240,6 +242,7 @@ const actions = {
   ...historyActions,
   ...settingsActions,
   ...closingActions,
+  ...cloudActions,
   go(app, el) {
     app.go(el.dataset.tab);
     if (el.dataset.anchor) setTimeout(() => document.getElementById(el.dataset.anchor)?.scrollIntoView({ behavior: 'smooth' }), 50);
@@ -314,11 +317,57 @@ function maybeSync() {
   if (st && st.token && (!st.lastSync || Date.now() - st.lastSync > 30 * 60000)) app.stravaSync(false);
 }
 
+// ---------- nuvem ----------
+app.cloudState = () => Cloud.getStatus().state;
+app.cloudConfigured = () => Cloud.getStatus().configured;
+app.cloudSetupHtml = () => cloudSection(app);
+app.openLogin = function () {
+  app.ui.loginMode = app.ui.loginMode || (app.S.setup ? 'up' : 'in');
+  app.openSheet(() => loginSheet(app));
+};
+setOnSave(() => Cloud.changed());
+app.startCloud = function () {
+  Cloud.start({
+    getState: () => app.S,
+    setState(st) {
+      st.rev = Math.max(st.rev || 0, app.S.rev || 0) + 1; // invalida caches
+      const hadSetup = !!app.S.setup;
+      app.S = replace(st);
+      if (!hadSetup && app.S.setup) {
+        app.closeSheet();
+        app.go('hoje');
+        toast('☁️ Dados restaurados da nuvem!', { kind: 'good' });
+      } else if (!app.sheet) app.render();
+    },
+    onStatus(s) {
+      document.querySelectorAll('[data-cloud-status]').forEach((el) => (el.innerHTML = statusLine(s)));
+      const dot = document.getElementById('cloud-dot');
+      if (dot) dot.className = `cdot ${s.state}`;
+      if (app.ui.tab === 'ajustes' && !app.sheet && app._lastCloudSigned !== s.signedIn) {
+        app._lastCloudSigned = s.signedIn;
+        app.render();
+      }
+      app._lastCloudSigned = s.signedIn;
+    },
+    onConflict(remote, local, d) {
+      return new Promise((resolve) => {
+        app.openSheet(() => conflictSheet(remote, local, d));
+        app._conflictCb = (v) => {
+          app._conflictCb = null;
+          app.closeSheet();
+          resolve(v);
+        };
+      });
+    },
+  });
+};
+
 // ---------- início ----------
 const hashTab = location.hash.replace('#', '');
 if (TABS.includes(hashTab)) app.ui.tab = hashTab;
 handleStravaCallback();
 app.render();
+app.startCloud();
 if (app.S.setup) {
   checkMedals(computeMedals(app.S).res);
   maybeSync();

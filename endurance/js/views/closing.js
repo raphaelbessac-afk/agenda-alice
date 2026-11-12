@@ -58,6 +58,7 @@ export function renderOnboarding() {
       ${first !== t ? `<button class="opt" data-act="onb-opt" data-v="${t}"><b>Hoje</b><small>${fmtDateLong(t)}</small></button>` : ''}
     </div>
     <button class="btn primary block big" data-act="onb-start">Largada! 🏁</button>
+    <button class="btn ghost block" data-act="onb-cloud">☁️ Já uso o Endurance: entrar na minha conta</button>
   </section>`;
 }
 
@@ -81,6 +82,14 @@ export const closingActions = {
       toast(`🎉 ${cap(monthName(ym))} fechado! Aproveite seus ${brl(spent)}.`, { ms: 4500 });
     } else toast(`${cap(monthName(ym))} fechado. Bora virar o jogo! 💪`, { ms: 4500 });
     setTimeout(() => toast('💾 Que tal fazer um backup? Ajustes › Backup', { ms: 4000 }), 4800);
+  },
+  'onb-cloud'(app) {
+    if (!app.cloudConfigured()) {
+      app.openSheet(() => `<div class="sheet-head"><h2>☁️ Nuvem</h2></div><p class="hint">Primeiro configure o Firebase neste aparelho. Depois de entrar, seus dados são baixados.</p>${app.cloudSetupHtml()}`, { tall: true });
+      return;
+    }
+    app.ui.loginMode = 'in';
+    app.openLogin();
   },
   'onb-opt'(app, el) {
     document.querySelectorAll('.onb .opt').forEach((b) => b.classList.toggle('on', b === el));

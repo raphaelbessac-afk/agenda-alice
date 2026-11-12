@@ -17,3 +17,19 @@ App web instalável (PWA) para gamificar a saúde: hábitos saudáveis rendem re
 - `js/strava.js`: integração com o Strava direto do navegador (o usuário cria o próprio app de API).
 
 Sem build: basta servir a pasta como arquivos estáticos (ex.: GitHub Pages).
+
+## Nuvem (Firebase)
+Os dados continuam no aparelho (funciona offline) e são sincronizados com o Firestore em `users/{uid}` (documento único com o estado em JSON; vale a alteração mais recente). Login por e-mail/senha ou Google.
+
+Configuração: cole o `firebaseConfig` em `js/firebase-config.js` (vale para todos os aparelhos) ou em Ajustes › Nuvem. Regras do Firestore:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+```

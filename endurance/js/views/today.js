@@ -159,7 +159,7 @@ export function renderToday(app) {
   const goal = S.goal && S.goal.amount > 0 ? S.goal : null;
 
   let html = '';
-  html += `<header class="top"><div class="brand"><span class="logo">E</span>Endurance</div><button class="icon-btn" data-act="go" data-tab="medalhas" aria-label="Medalhas">🏅</button></header>`;
+  html += `<header class="top"><div class="brand"><span class="logo">E</span>Endurance</div><div class="top-btns"><button class="icon-btn" data-act="go" data-tab="ajustes" data-anchor="nuvem" aria-label="Nuvem">☁️<i id="cloud-dot" class="cdot ${app.cloudState ? app.cloudState() : 'off'}"></i></button><button class="icon-btn" data-act="go" data-tab="medalhas" aria-label="Medalhas">🏅</button></div></header>`;
 
   if (isIOS && !standalone && !S.hideInstall)
     html += `<div class="banner info"><span>📲</span><div><b>Instale no iPhone</b><small>Toque em <b>Compartilhar</b> ⬆️ e depois em <b>Adicionar à Tela de Início</b>.</small></div><button class="x" data-act="hide-install" aria-label="Fechar">✕</button></div>`;
