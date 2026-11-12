@@ -2,7 +2,7 @@
 import { todayISO } from './utils.js';
 
 export const REMINDERS = [
-  { id: 'run', on: true, time: '06:30', title: '🏃 Dia de corrida! Bora pra rua', days: 'SA,SU,MO,WE' },
+  { id: 'run', on: true, time: '06:30', title: '🏃 Dia de corrida! Bora pra rua', days: 'FR,SA,MO,WE' },
   { id: 'gym', on: true, time: '06:30', title: '🏋️ Dia de malhar! Partiu academia', days: 'TU,TH' },
   { id: 'salad', on: true, time: '19:30', title: '🥗 Salada no jantar = dinheiro no bolso', days: '' },
   { id: 'check', on: true, time: '21:30', title: '📲 Endurance: confira seu dia', days: '' },
