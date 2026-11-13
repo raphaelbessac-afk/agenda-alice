@@ -5,8 +5,8 @@
 export const DEFAULT_RULES = {
   pool: 300,
   recurring: [
-    { id: 'run', name: 'Correr', emoji: '🏃', days: [1, 3, 5, 6], weight: 6 },
-    { id: 'gym', name: 'Malhar', emoji: '🏋️', days: [2, 4], weight: 9 },
+    { id: 'run', name: 'Correr', emoji: '🏃', days: [1, 3, 5, 6], weight: 6, manual: true },
+    { id: 'gym', name: 'Malhar', emoji: '🏋️', days: [2, 4], weight: 9, manual: true },
     { id: 'salad', name: 'Salada no jantar', emoji: '🥗', days: [0, 1, 2, 3, 4, 5, 6], weight: 4, manual: true },
   ],
   extras: [

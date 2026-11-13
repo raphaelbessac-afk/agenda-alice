@@ -130,7 +130,7 @@ function stravaSection(app) {
     const km = n.reduce((a, x) => a + x.km, 0);
     return `<div class="strava-ok"><span class="sv-logo">S</span><div><b>${esc(st.athlete || 'Conectado')}</b><small>Última sincronização: ${last}<br>${n.length} corridas · ${num(km)} km registrados</small></div></div>
       <button class="btn primary block" data-act="st-sync">🔄 Sincronizar agora</button>
-      <label class="switch-row"><span>Desmarcar corrida automaticamente quando não houver atividade no Strava<small>Só para dias passados. Você ainda pode remarcar até 2 dias depois.</small></span><input type="checkbox" data-in="st-auto" ${st.autoUncheck ? 'checked' : ''}></label>
+      ${rulesFor(app.S, ymOf(todayISO())).recurring.find((h) => h.id === 'run')?.manual ? '' : `<label class="switch-row"><span>Desmarcar corrida automaticamente quando não houver atividade no Strava<small>Só para dias passados. Você ainda pode remarcar até 2 dias depois.</small></span><input type="checkbox" data-in="st-auto" ${st.autoUncheck ? 'checked' : ''}></label>`}
       <button class="btn ghost block danger" data-act="st-off">Desconectar</button>`;
   }
   return `<ol class="steps">
@@ -176,14 +176,14 @@ export function renderSettings(app) {
   html += `<section class="card"><h3>💾 Backup</h3><p class="hint">Cópia em arquivo, extra à nuvem (salve em Arquivos ou iCloud Drive). Último: <b>${lastB}</b>.</p>
     <div class="row2"><button class="btn primary" data-act="backup">Exportar</button><label class="btn ghost">Importar<input type="file" accept="application/json,.json" data-in="import" hidden></label></div></section>`;
   html += `<section class="card"><h3>ℹ️ Como funciona</h3><ul class="how">
-    <li>Corrida e academia <b>já vêm marcadas</b>: toque para desmarcar o que não fez. A salada você <b>marca quando comer</b>.</li>
+    <li>Corrida, academia e salada: <b>toque para marcar</b> quando fizer. Dá para trocar para "já vem marcado" em Editar regras.</li>
     <li>Dá para editar <b>até 2 dias</b> para trás.</li>
     <li>Os valores da rotina são recalculados todo mês para o mês perfeito dar <b>${brl(rulesFor(S, ymOf(todayISO())).pool)}</b>.</li>
     <li>Extras e bônus podem levar você <b>acima</b> do pote.</li>
     <li>Saldo que sobra não acumula. <b>Saldo negativo</b> é descontado do mês seguinte.</li>
     <li>Contando desde ${fmtDateLong(S.setup.startDate)}.</li></ul></section>`;
   html += `<section class="card danger-zone"><button class="btn ghost block danger" data-act="reset">Apagar tudo e recomeçar</button></section>`;
-  html += `<p class="ver">Endurance · v1.2</p>`;
+  html += `<p class="ver">Endurance · v1.3</p>`;
   return html;
 }
 

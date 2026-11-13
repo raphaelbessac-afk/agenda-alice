@@ -48,7 +48,7 @@ export function renderOnboarding() {
     <p class="tag">Sua saúde vale dinheiro.<br><b>Literalmente.</b></p>
     <div class="onb-cards">
       <div><span>💰</span><p><b>R$ ${DEFAULT_RULES.pool} em jogo</b> todo mês. Mês perfeito de corrida, academia e salada = R$ 300.</p></div>
-      <div><span>✅</span><p>Corrida e academia <b>já vêm marcadas</b>: você desmarca o que não fez. A salada você marca quando comer.</p></div>
+      <div><span>✅</span><p>Correu, malhou, comeu salada? <b>Toque para marcar</b> e veja o dinheiro entrar.</p></div>
       <div><span>🍪</span><p>Biscoito, pizza, cerveja, vinho e noites tardias <b>custam caro</b>.</p></div>
       <div><span>🏅</span><p>Bônus, sequências, medalhas e <b>celebração</b> quando cruzar a linha de chegada.</p></div>
     </div>

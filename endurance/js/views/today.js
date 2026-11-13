@@ -127,6 +127,7 @@ function weekProgress(S, date) {
         done += ok;
         st = ok === sched.length ? 'ok' : 'miss';
         if (d === today && ok === sched.length) st = 'ok today';
+        else if (d === today && b.recurring.some((x) => x.pending)) st = 'todo';
       } else st = d < S.setup.startDate ? 'rest' : 'todo';
     }
     dots.push(`<i class="wd ${st}"><span>${WD_LETTER[w]}</span></i>`);
