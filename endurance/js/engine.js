@@ -70,7 +70,12 @@ function evalBase(S, date) {
       const ov = e.off ? e.off[h.id] : undefined;
       let done;
       let auto = false;
-      if (ov === undefined) {
+      let pending = false;
+      if (ov === undefined && h.manual) {
+        // Hábito manual: só conta quando você marca. Hoje fica "pendente".
+        done = false;
+        pending = date === today;
+      } else if (ov === undefined) {
         done = true;
         // Desmarca corrida sem atividade no Strava (dias passados, se o usuário ativou)
         if (h.id === 'run' && st.autoUncheck && st.token && st.coverFrom && date >= st.coverFrom && date < today && stravaRuns(S, date).length === 0) {
@@ -78,10 +83,13 @@ function evalBase(S, date) {
           auto = true;
         }
       } else done = !ov;
-      if (joker) done = true;
+      if (joker) {
+        done = true;
+        pending = false;
+      }
       const amount = done ? values[h.id] : 0;
       earned += amount;
-      return { h, done, value: values[h.id], amount, autoOff: auto };
+      return { h, done, value: values[h.id], amount, autoOff: auto, pending };
     });
 
   const c = e.c || {};
@@ -116,7 +124,9 @@ export function timeline(S) {
     const sc = r.bonuses.streak;
     const rec = sc && b.recurring.find((x) => x.h.id === sc.habit);
     if (rec) {
-      if (rec.done) {
+      if (rec.pending) {
+        // hoje ainda não marcado: não quebra a sequência
+      } else if (rec.done) {
         streak++;
         if (sc.every > 0 && sc.value > 0 && streak % sc.every === 0)
           b.bonuses.push({ id: 'streak', emoji: '🔥', label: `${streak} dias seguidos: ${rec.h.name.toLowerCase()}`, amount: sc.value });
@@ -189,6 +199,12 @@ export function monthSummary(S, ym) {
     if (b.joker) jokers++;
     stravaRuns(S, d).forEach((a) => (km += a.km));
     b.recurring.forEach((x) => {
+      if (x.pending) {
+        future += x.value; // ainda dá tempo hoje
+        const s0 = stats[x.h.id];
+        if (s0) s0.sched++;
+        return;
+      }
       recPossible += x.value;
       recDone += x.amount;
       const s = stats[x.h.id];

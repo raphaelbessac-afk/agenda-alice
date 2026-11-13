@@ -19,13 +19,21 @@ export function fresh() {
     celebrated: {},
     lastBackup: null,
     hideInstall: false,
+    mig: { runFri: true, saladManual: true },
   };
 }
 
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return migrate(JSON.parse(raw));
+    if (raw) {
+      const s = migrate(JSON.parse(raw));
+      if (s._migrated) {
+        delete s._migrated;
+        localStorage.setItem(KEY, JSON.stringify(s));
+      }
+      return s;
+    }
   } catch (e) {
     console.warn('Falha ao carregar dados', e);
   }
@@ -70,6 +78,30 @@ function migrate(s) {
     const rem = (s.reminders || []).find((x) => x.id === 'run');
     if (rem && rem.days === 'SA,SU,MO,WE') rem.days = 'FR,SA,MO,WE';
     s.mig.runFri = true;
+    s._migrated = true;
+  }
+  // v1.2: salada passa a ser marcada manualmente. Os dias que já passaram
+  // ficam como estavam (feitos, salvo os desmarcados); a partir de hoje é manual.
+  if (!s.mig.saladManual) {
+    for (const r of Object.values(s.rules || {})) {
+      const sa = (r.recurring || []).find((h) => h.id === 'salad');
+      if (sa) sa.manual = true;
+    }
+    if (s.setup) {
+      const today = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const t = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+      const d = new Date(s.setup.startDate + 'T00:00:00');
+      for (let k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; k < t; ) {
+        const e = (s.days[k] = s.days[k] || {});
+        e.off = e.off || {};
+        if (e.off.salad === undefined) e.off.salad = false; // feito
+        d.setDate(d.getDate() + 1);
+        k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      }
+    }
+    s.mig.saladManual = true;
+    s._migrated = true;
   }
   return s;
 }

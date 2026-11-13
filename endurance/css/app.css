@@ -193,6 +193,9 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
 .habit.rec.off { opacity: 0.75; }
 .habit.rec.off .hn b { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.4); color: var(--muted); }
 .habit.rec.off .hi { filter: grayscale(1); }
+.habit.rec.todo { border-style: dashed; border-color: rgba(184, 242, 58, 0.45); }
+.habit.rec.todo .hn small { color: var(--lime); }
+.habit.rec.todo .check { border-color: var(--lime); animation: pulse 2s infinite; }
 .check { width: 32px; height: 32px; border-radius: 50%; border: 2.5px solid var(--faint); display: grid; place-items: center; font-weight: 900; flex: none; transition: all 0.2s; }
 .done .check { background: var(--lime); border-color: var(--lime); color: #1d2a00; transform: scale(1.05); animation: pop 0.3s; }
 @keyframes pop { 50% { transform: scale(1.25); } }
@@ -513,3 +516,6 @@ pre.code { background: rgba(0, 0, 0, 0.35); border-radius: 12px; padding: 10px; 
 .block-opt { display: block; width: 100%; margin-bottom: 10px; }
 .block-opt small { display: block; margin-top: 4px; }
 .onb .btn.ghost { margin-top: 10px; }
+
+.mode-chip { justify-self: start; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, 0.08); }
+.mode-chip.on { background: rgba(184, 242, 58, 0.18); color: var(--lime); }
