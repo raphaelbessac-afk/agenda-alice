@@ -19,7 +19,7 @@ export function fresh() {
     celebrated: {},
     lastBackup: null,
     hideInstall: false,
-    mig: { runFri: true, saladManual: true },
+    mig: { runFri: true, saladManual: true, trainManual: true },
   };
 }
 
@@ -65,6 +65,19 @@ export function wipe() {
   localStorage.removeItem(KEY);
 }
 
+function makeManual(s, ids) {
+  for (const r of Object.values(s.rules || {})) for (const h of r.recurring || []) if (ids.includes(h.id)) h.manual = true;
+  if (!s.setup) return;
+  const pad = (n) => String(n).padStart(2, '0');
+  const key = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const t = key(new Date());
+  for (const d = new Date(s.setup.startDate + 'T00:00:00'); key(d) < t; d.setDate(d.getDate() + 1)) {
+    const e = (s.days[key(d)] = s.days[key(d)] || {});
+    e.off = e.off || {};
+    for (const id of ids) if (e.off[id] === undefined) e.off[id] = false; // feito, como era antes
+  }
+}
+
 function migrate(s) {
   const f = fresh();
   for (const k of Object.keys(f)) if (!(k in s)) s[k] = f[k];
@@ -80,27 +93,16 @@ function migrate(s) {
     s.mig.runFri = true;
     s._migrated = true;
   }
-  // v1.2: salada passa a ser marcada manualmente. Os dias que já passaram
-  // ficam como estavam (feitos, salvo os desmarcados); a partir de hoje é manual.
+  // v1.2: salada manual. v1.3: corrida e academia manuais também.
+  // Os dias que já passaram ficam como estavam; a partir de hoje é manual.
   if (!s.mig.saladManual) {
-    for (const r of Object.values(s.rules || {})) {
-      const sa = (r.recurring || []).find((h) => h.id === 'salad');
-      if (sa) sa.manual = true;
-    }
-    if (s.setup) {
-      const today = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      const t = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-      const d = new Date(s.setup.startDate + 'T00:00:00');
-      for (let k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; k < t; ) {
-        const e = (s.days[k] = s.days[k] || {});
-        e.off = e.off || {};
-        if (e.off.salad === undefined) e.off.salad = false; // feito
-        d.setDate(d.getDate() + 1);
-        k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      }
-    }
+    makeManual(s, ['salad']);
     s.mig.saladManual = true;
+    s._migrated = true;
+  }
+  if (!s.mig.trainManual) {
+    makeManual(s, ['run', 'gym']);
+    s.mig.trainManual = true;
     s._migrated = true;
   }
   return s;
