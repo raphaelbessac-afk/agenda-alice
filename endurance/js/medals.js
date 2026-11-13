@@ -45,7 +45,7 @@ export function computeMedals(S) {
     if (st.clean && st.clean % 7 === 0) add('clean7');
     const sa = b.recurring.find((x) => x.h.id === 'salad');
     if (sa) {
-      st.salad = sa.done ? st.salad + 1 : 0;
+      if (!sa.pending) st.salad = sa.done ? st.salad + 1 : 0;
       if (st.salad && st.salad % 30 === 0) add('salad30');
     }
     if (b.bonuses.some((x) => x.id === 'week')) add('week');

@@ -56,9 +56,9 @@ function recCard(S, x, date) {
   const strava = runs.length ? `<span class="tag strava">Strava ✓ ${x.h.id === 'run' ? `${num(km)} km` : `${runs[0].min} min`}</span>` : '';
   const auto = x.autoOff ? `<span class="tag muted">sem corrida no Strava</span>` : '';
   return `
-  <button class="habit rec ${x.done ? 'done' : 'off'}" data-act="toggle" data-id="${x.h.id}" aria-pressed="${x.done}">
+  <button class="habit rec ${x.done ? 'done' : x.pending ? 'todo' : 'off'}" data-act="toggle" data-id="${x.h.id}" aria-pressed="${x.done}">
     <span class="hi">${x.h.emoji}</span>
-    <span class="hn"><b>${esc(x.h.name)}</b><small>${x.done ? `+${brl(x.value)}` : `não fiz · ${brl(x.value)} perdidos`} ${strava}${auto}</small></span>
+    <span class="hn"><b>${esc(x.h.name)}</b><small>${x.done ? `+${brl(x.value)}` : x.pending ? `toque quando fizer · +${brl(x.value)}` : `não fiz · ${brl(x.value)} perdidos`} ${strava}${auto}</small></span>
     <span class="check">${x.done ? '✓' : ''}</span>
   </button>`;
 }
@@ -196,7 +196,7 @@ export function renderToday(app) {
     </div>`;
 
   if (b.recurring.length) {
-    html += `<h3 class="sec">Rotina do dia <small>já marcada · toque se não fez</small></h3><div class="list">${b.recurring.map((x) => recCard(S, x, date)).join('')}</div>`;
+    html += `<h3 class="sec">Rotina do dia <small>toque para marcar ou desmarcar</small></h3><div class="list">${b.recurring.map((x) => recCard(S, x, date)).join('')}</div>`;
   }
   if (!b.recurring.some((x) => ['run', 'gym'].includes(x.h.id))) html += `<p class="rest">😌 Dia de descanso dos treinos. Recupera que amanhã tem mais.</p>`;
 

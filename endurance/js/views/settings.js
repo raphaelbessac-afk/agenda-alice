@@ -53,6 +53,7 @@ function ruleEditor(app) {
     h += `<div class="ed">
       <div class="ed-top"><span>${r.emoji}</span>${r.custom ? `<input class="name" data-in="draft" data-path="recurring.${i}.name" value="${esc(r.name)}">` : `<b>${esc(r.name)}</b>`}
       <span class="pv" data-pv="${r.id}">${brl(values[r.id])} × ${occ[r.id]}</span>${r.custom ? `<button class="x" data-act="ed-del" data-list="recurring" data-i="${i}" aria-label="Remover">🗑</button>` : ''}</div>
+      <button class="mode-chip ${r.manual ? '' : 'on'}" data-act="ed-manual" data-i="${i}">${r.manual ? '✋ Marco manualmente' : '✅ Já vem marcado'}</button>
       <div class="ed-row"><label>Peso ${inp(`recurring.${i}.weight`, r.weight, 'min="0"')}</label>
       <div class="days">${WD_LETTER.map((l, w) => `<button class="${r.days.includes(w) ? 'on' : ''}" data-act="ed-day" data-i="${i}" data-w="${w}">${l}</button>`).join('')}</div></div>
     </div>`;
@@ -175,14 +176,14 @@ export function renderSettings(app) {
   html += `<section class="card"><h3>💾 Backup</h3><p class="hint">Cópia em arquivo, extra à nuvem (salve em Arquivos ou iCloud Drive). Último: <b>${lastB}</b>.</p>
     <div class="row2"><button class="btn primary" data-act="backup">Exportar</button><label class="btn ghost">Importar<input type="file" accept="application/json,.json" data-in="import" hidden></label></div></section>`;
   html += `<section class="card"><h3>ℹ️ Como funciona</h3><ul class="how">
-    <li>Corrida, academia e salada <b>já vêm marcadas</b>. Toque para desmarcar o que não fez.</li>
+    <li>Corrida e academia <b>já vêm marcadas</b>: toque para desmarcar o que não fez. A salada você <b>marca quando comer</b>.</li>
     <li>Dá para editar <b>até 2 dias</b> para trás.</li>
     <li>Os valores da rotina são recalculados todo mês para o mês perfeito dar <b>${brl(rulesFor(S, ymOf(todayISO())).pool)}</b>.</li>
     <li>Extras e bônus podem levar você <b>acima</b> do pote.</li>
     <li>Saldo que sobra não acumula. <b>Saldo negativo</b> é descontado do mês seguinte.</li>
     <li>Contando desde ${fmtDateLong(S.setup.startDate)}.</li></ul></section>`;
   html += `<section class="card danger-zone"><button class="btn ghost block danger" data-act="reset">Apagar tudo e recomeçar</button></section>`;
-  html += `<p class="ver">Endurance · v1.1</p>`;
+  html += `<p class="ver">Endurance · v1.2</p>`;
   return html;
 }
 
@@ -196,6 +197,11 @@ export const settingsActions = {
     const r = app.ui.draft.recurring[Number(el.dataset.i)];
     const w = Number(el.dataset.w);
     r.days = r.days.includes(w) ? r.days.filter((x) => x !== w) : [...r.days, w].sort();
+    app.refreshSheet();
+  },
+  'ed-manual'(app, el) {
+    const r = app.ui.draft.recurring[Number(el.dataset.i)];
+    r.manual = !r.manual;
     app.refreshSheet();
   },
   'ed-kind'(app, el) {
