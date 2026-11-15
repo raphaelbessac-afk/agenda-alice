@@ -64,7 +64,7 @@ function statsBlock(S, ym) {
     const p = prev && prev.stats[s.h.id];
     if (s.kind === 'rec') {
       const pct = s.sched ? Math.round((s.done / s.sched) * 100) : 0;
-      return `<div class="st"><span>${s.h.emoji}</span><div><b>${esc(s.h.name)}</b><div class="bar sm"><i style="width:${pct}%"></i></div></div><span class="sv">${s.done}/${s.sched}<small>${brl(s.amount)}</small></span></div>`;
+      return `<div class="st"><span>${s.h.emoji}</span><div><b>${esc(s.h.name)}</b><div class="bar sm"><i style="width:${pct}%"></i></div></div><span class="sv">${s.done}/${s.sched}${s.extra ? ` <em class="good">+${s.extra}</em>` : ''}<small>${brl(s.amount)}</small></span></div>`;
     }
     const delta = p ? s.n - p.n : null;
     const arrow = delta === null || delta === 0 ? '' : s.kind === 'pen' ? (delta < 0 ? `<em class="good">▼${-delta}</em>` : `<em class="bad">▲${delta}</em>`) : delta > 0 ? `<em class="good">▲${delta}</em>` : `<em class="bad">▼${-delta}</em>`;
@@ -125,7 +125,8 @@ export function dayDetail(app, date) {
   const line = (emoji, name, amt, cls = '') => `<div class="dl ${cls}"><span>${emoji}</span><b>${esc(name)}</b><em>${amt}</em></div>`;
   let h = `<div class="sheet-head"><h2>${cap(fmtDay(date))}</h2><span class="net ${b.net >= 0 ? 'pos' : 'neg'}">${brl(b.net, true)}</span></div>`;
   if (b.joker) h += `<p class="hint">🧊 Coringa usado neste dia.</p>`;
-  h += b.recurring.map((x) => line(x.h.emoji, x.h.name, x.done ? brl(x.amount, true) : 'não fez', x.done ? 'pos' : 'off')).join('');
+  h += b.recurring.map((x) => line(x.h.emoji, x.h.name, x.done ? brl(x.amount, true) : x.madeUp ? `reposto (${['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'][weekday(x.madeUp)]})` : 'não fez', x.done ? 'pos' : 'off')).join('');
+  h += b.makeups.filter((m) => !m.covers).map((m) => line(m.h.emoji, `${m.h.name} extra`, 'registrado')).join('');
   h += b.extras.filter((x) => x.n).map((x) => line(x.h.emoji, `${x.h.name} ×${x.n}`, brl(x.amount, true), 'pos')).join('');
   h += b.bonuses.map((x) => line(x.emoji, x.label, brl(x.amount, true), 'pos')).join('');
   h += b.penalties.filter((x) => x.n).map((x) => line(x.h.emoji, x.h.type === 'tiers' ? `${x.h.name} (${x.h.tiers[x.n - 1].label})` : x.h.type === 'toggle' ? x.h.name : `${x.h.name} ×${x.n}`, brl(-x.amount), 'neg')).join('');
