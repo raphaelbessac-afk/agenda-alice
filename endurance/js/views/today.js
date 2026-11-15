@@ -1,5 +1,5 @@
 // Tela "Hoje": dashboard do mês + marcação do dia.
-import { brl, clamp, daysInMonth, esc, relDay, fmtDay, monthName, cap, todayISO, ymOf, weekday, addDays, WD_LETTER, num, diffDays } from '../utils.js';
+import { brl, clamp, daysInMonth, esc, relDay, fmtDay, monthName, cap, todayISO, ymOf, weekday, addDays, WD_LETTER, num, diffDays, WD_LONG } from '../utils.js';
 import { timeline, monthSummary, canEdit, editableDates, jokersLeft, pendingClosings, examStatus, stravaRuns, stravaGym } from '../engine.js';
 import { burst, floatText, centerOf, toast } from '../fx.js';
 
@@ -60,6 +60,23 @@ function recCard(S, x, date) {
     <span class="hi">${x.h.emoji}</span>
     <span class="hn"><b>${esc(x.h.name)}</b><small>${x.done ? `+${brl(x.value)}` : x.pending ? `toque quando fizer · +${brl(x.value)}` : `não fiz · ${brl(x.value)} perdidos`} ${strava}${auto}</small></span>
     <span class="check">${x.done ? '✓' : ''}</span>
+  </button>`;
+}
+
+function makeupCard(S, b, h, date) {
+  const m = b.makeups.find((y) => y.h.id === h.id);
+  const acts = h.id === 'run' ? stravaRuns(S, date) : h.id === 'gym' ? stravaGym(S, date) : [];
+  const strava = acts.length ? `<span class="tag strava">Strava ✓ ${h.id === 'run' ? `${num(acts.reduce((a, r) => a + r.km, 0))} km` : `${acts[0].min} min`}</span>` : '';
+  const txt = !m
+    ? 'fez hoje? toque para registrar'
+    : m.covers
+      ? `🔁 repõe ${WD_LONG[weekday(m.covers)]}: <em>+${brl(m.amount)}</em>`
+      : 'registrado · nenhuma falta para repor nesta semana';
+  return `
+  <button class="habit rec ${m ? 'done' : 'xtra'}" data-act="xtrain" data-id="${h.id}" aria-pressed="${!!m}">
+    <span class="hi">${h.emoji}</span>
+    <span class="hn"><b>${esc(h.name)} extra</b><small>${txt} ${strava}</small></span>
+    <span class="check">${m ? '✓' : ''}</span>
   </button>`;
 }
 
@@ -201,8 +218,13 @@ export function renderToday(app) {
   }
   if (!b.recurring.some((x) => ['run', 'gym'].includes(x.h.id))) html += `<p class="rest">😌 Dia de descanso dos treinos. Recupera que amanhã tem mais.</p>`;
 
-  if (b.bonuses.length)
-    html += `<div class="list">${b.bonuses.map((x) => `<div class="habit bonus"><span class="hi">${x.emoji}</span><span class="hn"><b>${esc(x.label)}</b><small>bônus</small></span><span class="amt">${brl(x.amount, true)}</span></div>`).join('')}</div>`;
+  const offDay = r.recurring.filter((h) => !h.days.includes(weekday(date)));
+  if (offDay.length)
+    html += `<h3 class="sec">Treino fora do dia <small>repõe uma falta da semana</small></h3><div class="list">${offDay.map((h) => makeupCard(S, b, h, date)).join('')}</div>`;
+
+  const shownBonuses = b.bonuses.filter((x) => !x.id.startsWith('makeup'));
+  if (shownBonuses.length)
+    html += `<div class="list">${shownBonuses.map((x) => `<div class="habit bonus"><span class="hi">${x.emoji}</span><span class="hn"><b>${esc(x.label)}</b><small>bônus</small></span><span class="amt">${brl(x.amount, true)}</span></div>`).join('')}</div>`;
 
   html += `<h3 class="sec">Extras <small>dinheiro a mais</small></h3><div class="list">${b.extras.map(extraCard).join('')}</div>`;
   html += `<h3 class="sec">Deslizes <small>toque para registrar</small></h3><div class="pens">${b.penalties.map(penaltyTile).join('')}</div>`;
@@ -330,6 +352,26 @@ export const todayActions = {
     });
     const h = timeline(app.S).days[date].penalties.find((y) => y.h.id === id).h;
     if (on) floatText(p.x, p.y - 20, brl(-h.value), 'bad');
+  },
+  xtrain(app, el) {
+    const date = app.ui.date;
+    const id = el.dataset.id;
+    const p = centerOf(el);
+    let on;
+    app.commit((S) => {
+      const e = day(S, date);
+      e.x = e.x || {};
+      e.x[id] = e.x[id] ? 0 : 1;
+      on = e.x[id];
+    });
+    if (on) {
+      const m = timeline(app.S).days[date].makeups.find((y) => y.h.id === id);
+      if (m && m.covers) floatText(p.x, p.y - 20, `+${brl(m.amount)}`, 'good');
+      else {
+        burst(p.x, p.y, { count: 10 });
+        toast('💪 Treino extra registrado. Não há falta para repor nesta semana, então ele não vale dinheiro.', { ms: 4500 });
+      }
+    }
   },
   joker(app) {
     const date = app.ui.date;

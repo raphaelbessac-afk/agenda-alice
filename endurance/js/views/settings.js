@@ -178,12 +178,13 @@ export function renderSettings(app) {
   html += `<section class="card"><h3>ℹ️ Como funciona</h3><ul class="how">
     <li>Corrida, academia e salada: <b>toque para marcar</b> quando fizer. Dá para trocar para "já vem marcado" em Editar regras.</li>
     <li>Dá para editar <b>até 2 dias</b> para trás.</li>
+    <li><b>Treino fora do dia</b> repõe uma falta da mesma semana (seg a dom) e devolve o valor dela. Sem falta para repor, fica só registrado.</li>
     <li>Os valores da rotina são recalculados todo mês para o mês perfeito dar <b>${brl(rulesFor(S, ymOf(todayISO())).pool)}</b>.</li>
     <li>Extras e bônus podem levar você <b>acima</b> do pote.</li>
     <li>Saldo que sobra não acumula. <b>Saldo negativo</b> é descontado do mês seguinte.</li>
     <li>Contando desde ${fmtDateLong(S.setup.startDate)}.</li></ul></section>`;
   html += `<section class="card danger-zone"><button class="btn ghost block danger" data-act="reset">Apagar tudo e recomeçar</button></section>`;
-  html += `<p class="ver">Endurance · v1.3</p>`;
+  html += `<p class="ver">Endurance · v1.4</p>`;
   return html;
 }
 

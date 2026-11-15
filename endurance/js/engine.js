@@ -1,5 +1,5 @@
 // Motor de cálculo: valores do mês, avaliação de cada dia, bônus, saldo e projeção.
-import { addDays, addMonths, daysInMonth, diffDays, monthEnd, monthStart, pad, todayISO, weekday, ymOf } from './utils.js';
+import { addDays, addMonths, daysInMonth, diffDays, monthEnd, monthStart, pad, todayISO, weekday, ymOf, WD_LONG } from './utils.js';
 import { RUN_TYPES, GYM_TYPES } from './rules.js';
 
 export function rulesFor(S, ym) {
@@ -92,6 +92,10 @@ function evalBase(S, date) {
       return { h, done, value: values[h.id], amount, autoOff: auto, pending };
     });
 
+  // Treino feito fora do dia programado (reposição)
+  const xt = e.x || {};
+  const makeups = r.recurring.filter((h) => !h.days.includes(wd) && xt[h.id]).map((h) => ({ h, covers: null, amount: 0 }));
+
   const c = e.c || {};
   const extras = r.extras.map((h) => {
     const n = c[h.id] || 0;
@@ -106,7 +110,7 @@ function evalBase(S, date) {
     return { h, n, amount };
   });
 
-  return { date, ym: ymOf(date), rules: r, joker, recurring, extras, penalties, bonuses: [], earned, lost, note: e.note || '' };
+  return { date, ym: ymOf(date), rules: r, joker, recurring, makeups, extras, penalties, bonuses: [], earned, lost, note: e.note || '' };
 }
 
 // Percorre todos os dias desde o início, calculando sequências e bônus.
@@ -153,13 +157,43 @@ export function timeline(S) {
       }
     }
 
+    days[d] = b;
+    order.push(d);
+  }
+
+  // Reposição: treino fora do dia recupera um treino perdido na mesma semana (seg a dom).
+  const weeks = {};
+  for (const d of order) {
+    const mon = addDays(d, -((weekday(d) + 6) % 7));
+    (weeks[mon] = weeks[mon] || []).push(d);
+  }
+  for (const ds of Object.values(weeks)) {
+    const misses = {};
+    const extra = {};
+    for (const d of ds) {
+      for (const x of days[d].recurring) if (!x.done && !x.pending) (misses[x.h.id] = misses[x.h.id] || []).push({ d, x });
+      for (const m of days[d].makeups) (extra[m.h.id] = extra[m.h.id] || []).push({ d, m });
+    }
+    for (const id of Object.keys(extra)) {
+      const ms = misses[id] || [];
+      extra[id].forEach((ex, i) => {
+        const miss = ms[i];
+        if (!miss) return;
+        ex.m.covers = miss.d;
+        ex.m.amount = miss.x.value;
+        miss.x.madeUp = ex.d;
+        days[ex.d].bonuses.push({ id: `makeup-${id}`, emoji: '🔁', label: `Reposição: ${miss.x.h.name.toLowerCase()} de ${WD_LONG[weekday(miss.d)]}`, amount: miss.x.value });
+      });
+    }
+  }
+
+  for (const d of order) {
+    const b = days[d];
     b.bonusTotal = b.bonuses.reduce((a, x) => a + x.amount, 0);
     b.earned += b.bonusTotal;
     b.net = b.earned - b.lost;
     const allDone = b.recurring.every((x) => x.done);
     b.status = b.lost > 0 ? (b.net < 0 ? 'bad' : 'mixed') : allDone ? 'perfect' : 'partial';
-    days[d] = b;
-    order.push(d);
   }
   memo.tl = { days, order, streak };
   return memo.tl;
@@ -177,7 +211,7 @@ export function monthSummary(S, ym) {
   let earned = 0, lost = 0, bonus = 0, recDone = 0, recPossible = 0, future = 0, jokers = 0, km = 0;
   const days = [];
   const stats = {};
-  r.recurring.forEach((h) => (stats[h.id] = { h, kind: 'rec', done: 0, sched: 0, amount: 0 }));
+  r.recurring.forEach((h) => (stats[h.id] = { h, kind: 'rec', done: 0, sched: 0, amount: 0, extra: 0 }));
   r.extras.forEach((h) => (stats[h.id] = { h, kind: 'extra', n: 0, days: 0, amount: 0 }));
   r.penalties.forEach((h) => (stats[h.id] = { h, kind: 'pen', n: 0, days: 0, amount: 0 }));
 
@@ -197,6 +231,7 @@ export function monthSummary(S, ym) {
     lost += b.lost;
     bonus += b.bonusTotal;
     if (b.joker) jokers++;
+    b.makeups.forEach((m) => stats[m.h.id] && stats[m.h.id].extra++);
     stravaRuns(S, d).forEach((a) => (km += a.km));
     b.recurring.forEach((x) => {
       if (x.pending) {
