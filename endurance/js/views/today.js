@@ -81,6 +81,16 @@ function makeupCard(S, b, h, date) {
 }
 
 function extraCard(x) {
+  if (x.h.type === 'tiers') {
+    return `
+  <div class="habit extra tiers ${x.n ? 'has' : ''}">
+    <div class="row-top"><span class="hi">${x.h.emoji}</span><span class="hn"><b>${esc(x.h.name)}</b><small>${x.n ? `<em>${brl(x.amount, true)}</em>` : 'opcional · escolha o tempo'}</small></span></div>
+    <div class="seg good">
+      <button class="${x.n === 0 ? 'on' : ''}" data-act="tier" data-id="${x.h.id}" data-v="0">Não</button>
+      ${x.h.tiers.map((t, i) => `<button class="${x.n === i + 1 ? 'on good' : ''}" data-act="tier" data-id="${x.h.id}" data-v="${i + 1}">${esc(t.label)}<small>+${brl(t.value)}</small></button>`).join('')}
+    </div>
+  </div>`;
+  }
   return `
   <div class="habit extra ${x.n ? 'has' : ''}">
     <span class="hi">${x.h.emoji}</span>
@@ -331,13 +341,22 @@ export const todayActions = {
     const v = Number(el.dataset.v);
     const p = centerOf(el);
     const b = timeline(app.S).days[date];
-    const before = b.penalties.find((y) => y.h.id === id);
+    const pen = b.penalties.find((y) => y.h.id === id);
+    const ext = b.extras.find((y) => y.h.id === id);
+    const before = pen || ext;
     app.commit((S) => {
       const e = day(S, date);
       e.c = e.c || {};
       e.c[id] = v;
     });
-    if (v > before.n) floatText(p.x, p.y - 20, brl(-before.h.tiers[v - 1].value), 'bad');
+    if (pen && v > before.n) floatText(p.x, p.y - 20, brl(-before.h.tiers[v - 1].value), 'bad');
+    if (ext && v > 0) {
+      const diff = before.h.tiers[v - 1].value - before.amount;
+      if (diff > 0) {
+        burst(p.x, p.y, { count: 16, emoji: '🪙' });
+        floatText(p.x, p.y - 20, `+${brl(diff)}`, 'good');
+      }
+    }
   },
   ptoggle(app, el) {
     const date = app.ui.date;

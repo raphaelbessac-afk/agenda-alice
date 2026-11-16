@@ -1,5 +1,5 @@
 // Service worker: guarda o app para funcionar offline.
-const VERSION = 'endurance-v7';
+const VERSION = 'endurance-v8';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/utils.js', 'js/rules.js', 'js/store.js', 'js/engine.js', 'js/medals.js',

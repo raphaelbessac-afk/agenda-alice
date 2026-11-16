@@ -16,7 +16,13 @@ function valuesTable(S) {
     .map((h) => `<tr><td>${h.emoji} ${esc(h.name)}</td><td>${occ[h.id]}×</td><td class="pos">+${brl(values[h.id])}</td></tr>`)
     .join('');
   const total = r.recurring.reduce((a, h) => a + values[h.id] * occ[h.id], 0);
-  const ex = r.extras.map((h) => `<tr><td>${h.emoji} ${esc(h.name)}</td><td>bônus</td><td class="pos">+${brl(h.value)}</td></tr>`).join('');
+  const ex = r.extras
+    .map((h) =>
+      h.type === 'tiers'
+        ? h.tiers.map((t) => `<tr><td>${h.emoji} ${esc(h.name)} · ${esc(t.label)}</td><td>bônus</td><td class="pos">+${brl(t.value)}</td></tr>`).join('')
+        : `<tr><td>${h.emoji} ${esc(h.name)}</td><td>bônus</td><td class="pos">+${brl(h.value)}</td></tr>`
+    )
+    .join('');
   const pen = r.penalties
     .map((h) =>
       h.type === 'tiers'
@@ -62,7 +68,11 @@ function ruleEditor(app) {
   h += `<h3 class="sec">Extras</h3>`;
   d.extras.forEach((r, i) => {
     h += `<div class="ed"><div class="ed-top"><span>${r.emoji}</span>${r.custom ? `<input class="name" data-in="draft" data-path="extras.${i}.name" value="${esc(r.name)}">` : `<b>${esc(r.name)}</b>`}${r.custom ? `<button class="x" data-act="ed-del" data-list="extras" data-i="${i}">🗑</button>` : ''}</div>
-      <div class="ed-row"><label>Valor R$ ${inp(`extras.${i}.value`, r.value, 'min="0"')}</label><label>Máx/dia ${inp(`extras.${i}.max`, r.max || 1, 'min="1"')}</label></div></div>`;
+      <div class="ed-row">${
+        r.type === 'tiers'
+          ? r.tiers.map((t, j) => `<label>${esc(t.label)} R$ ${inp(`extras.${i}.tiers.${j}.value`, t.value, 'min="0"')}</label>`).join('')
+          : `<label>Valor R$ ${inp(`extras.${i}.value`, r.value, 'min="0"')}</label><label>Máx/dia ${inp(`extras.${i}.max`, r.max || 1, 'min="1"')}</label>`
+      }</div></div>`;
   });
   h += `<h3 class="sec">Deslizes</h3>`;
   d.penalties.forEach((r, i) => {
@@ -184,7 +194,7 @@ export function renderSettings(app) {
     <li>Saldo que sobra não acumula. <b>Saldo negativo</b> é descontado do mês seguinte.</li>
     <li>Contando desde ${fmtDateLong(S.setup.startDate)}.</li></ul></section>`;
   html += `<section class="card danger-zone"><button class="btn ghost block danger" data-act="reset">Apagar tudo e recomeçar</button></section>`;
-  html += `<p class="ver">Endurance · v1.4</p>`;
+  html += `<p class="ver">Endurance · v1.5</p>`;
   return html;
 }
 

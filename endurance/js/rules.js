@@ -12,6 +12,7 @@ export const DEFAULT_RULES = {
   extras: [
     { id: 'medical', name: 'Consulta ou exame', emoji: '🩺', value: 40, max: 3 },
     { id: 'reading', name: 'Ler 30 min', emoji: '📖', value: 8, max: 2 },
+    { id: 'meditation', name: 'Meditação', emoji: '🧘', type: 'tiers', tiers: [{ label: '10 min', value: 3 }, { label: '15 min', value: 5 }, { label: '20 min', value: 7 }] },
   ],
   penalties: [
     { id: 'cookie', name: 'Biscoito recheado', emoji: '🍪', value: 25, max: 5 },

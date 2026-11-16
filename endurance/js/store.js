@@ -19,7 +19,7 @@ export function fresh() {
     celebrated: {},
     lastBackup: null,
     hideInstall: false,
-    mig: { runFri: true, saladManual: true, trainManual: true },
+    mig: { runFri: true, saladManual: true, trainManual: true, meditation: true },
   };
 }
 
@@ -103,6 +103,15 @@ function migrate(s) {
   if (!s.mig.trainManual) {
     makeManual(s, ['run', 'gym']);
     s.mig.trainManual = true;
+    s._migrated = true;
+  }
+  // v1.5: meditação diária opcional (10, 15 ou 20 min), já valendo neste mês.
+  if (!s.mig.meditation) {
+    for (const r of Object.values(s.rules || {})) {
+      if (r.extras && !r.extras.some((h) => h.id === 'meditation'))
+        r.extras.push({ id: 'meditation', name: 'Meditação', emoji: '🧘', type: 'tiers', tiers: [{ label: '10 min', value: 3 }, { label: '15 min', value: 5 }, { label: '20 min', value: 7 }] });
+    }
+    s.mig.meditation = true;
     s._migrated = true;
   }
   return s;
