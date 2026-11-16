@@ -99,7 +99,7 @@ function evalBase(S, date) {
   const c = e.c || {};
   const extras = r.extras.map((h) => {
     const n = c[h.id] || 0;
-    const amount = n * h.value;
+    const amount = h.type === 'tiers' ? (n ? h.tiers[Math.min(n, h.tiers.length) - 1].value : 0) : n * h.value;
     earned += amount;
     return { h, n, amount };
   });

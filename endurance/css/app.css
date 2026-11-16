@@ -522,3 +522,9 @@ pre.code { background: rgba(0, 0, 0, 0.35); border-radius: 12px; padding: 10px; 
 
 .habit.rec.xtra { opacity: 0.85; border-style: dashed; }
 .habit.rec.xtra .hi { filter: saturate(0.6); }
+
+.habit.extra.tiers { flex-direction: column; align-items: stretch; gap: 10px; }
+.habit.extra.tiers .row-top { display: flex; align-items: center; gap: 12px; }
+.seg.good button small { color: var(--lime); }
+.seg button.on.good { background: var(--cyan); color: #04212a; }
+.seg button.on.good small { color: #04212a; }

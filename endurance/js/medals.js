@@ -9,6 +9,7 @@ export const MEDALS = [
   { id: 'salad30', emoji: '🥗', name: 'Mestre da salada', desc: '30 saladas seguidas no jantar.', color: '#B8F23A' },
   { id: 'cookie30', emoji: '🍪', name: 'Adeus, biscoito', desc: '30 dias seguidos sem biscoito recheado.', color: '#FFD23F' },
   { id: 'sleep30', emoji: '😴', name: 'Sono de atleta', desc: '30 noites seguidas dormindo antes da meia-noite.', color: '#6C8BFF' },
+  { id: 'zen', emoji: '🧘', name: 'Mente zen', desc: 'Meditar em 15 dias do mesmo mês.', color: '#3DD6F5' },
   { id: 'reader', emoji: '📚', name: 'Rato de biblioteca', desc: '10 leituras de 30 min no mesmo mês.', color: '#FF9F43' },
   { id: 'goal', emoji: '🥇', name: 'Linha de chegada', desc: 'Bater o pote do mês (R$ 300).', color: '#FFD23F' },
   { id: 'ultra', emoji: '🚀', name: 'Ultramaratona', desc: 'Passar R$ 50 além do pote no mês.', color: '#FF3D8B' },
@@ -60,6 +61,7 @@ export function computeMedals(S) {
     const reading = ms.stats.reading ? ms.stats.reading.n : 0;
     bestReading = Math.max(bestReading, reading);
     if (reading >= 10) add('reader');
+    if (ms.stats.meditation && ms.stats.meditation.days >= 15) add('zen');
     bestKm = Math.max(bestKm, ms.km);
     if (ms.km >= 50) add('km50');
     if (ms.km >= 100) add('km100');
@@ -79,6 +81,7 @@ export function computeMedals(S) {
   prog.salad30 = `Sequência atual: ${st.salad % 30}/30`;
   prog.cookie30 = `Sequência atual: ${st.cookie % 30}/30`;
   prog.sleep30 = `Sequência atual: ${st.sleep % 30}/30`;
+  prog.zen = `Este mês: ${cur.stats.meditation ? cur.stats.meditation.days : 0}/15 dias`;
   prog.reader = `Este mês: ${cur.stats.reading ? cur.stats.reading.n : 0}/10`;
   prog.goal = `Este mês: ${Math.max(0, Math.round((cur.balance / cur.pool) * 100))}%`;
   prog.ultra = prog.goal;

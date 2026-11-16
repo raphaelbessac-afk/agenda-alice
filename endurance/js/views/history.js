@@ -66,9 +66,9 @@ function statsBlock(S, ym) {
       const pct = s.sched ? Math.round((s.done / s.sched) * 100) : 0;
       return `<div class="st"><span>${s.h.emoji}</span><div><b>${esc(s.h.name)}</b><div class="bar sm"><i style="width:${pct}%"></i></div></div><span class="sv">${s.done}/${s.sched}${s.extra ? ` <em class="good">+${s.extra}</em>` : ''}<small>${brl(s.amount)}</small></span></div>`;
     }
-    const delta = p ? s.n - p.n : null;
+    const delta = p ? (s.h.type === 'tiers' ? s.days - p.days : s.n - p.n) : null;
     const arrow = delta === null || delta === 0 ? '' : s.kind === 'pen' ? (delta < 0 ? `<em class="good">▼${-delta}</em>` : `<em class="bad">▲${delta}</em>`) : delta > 0 ? `<em class="good">▲${delta}</em>` : `<em class="bad">▼${-delta}</em>`;
-    return `<div class="st ${s.kind}"><span>${s.h.emoji}</span><div><b>${esc(s.h.name)}</b><small>${s.kind === 'pen' ? (s.h.type === 'tiers' ? `${s.days} dias` : `${s.n}×`) : `${s.n}×`} ${arrow}</small></div><span class="sv ${s.kind === 'pen' ? 'neg' : 'pos'}">${s.kind === 'pen' ? brl(-s.amount) : brl(s.amount, true)}</span></div>`;
+    return `<div class="st ${s.kind}"><span>${s.h.emoji}</span><div><b>${esc(s.h.name)}</b><small>${s.h.type === 'tiers' ? `${s.days} ${s.days === 1 ? 'dia' : 'dias'}` : `${s.n}×`} ${arrow}</small></div><span class="sv ${s.kind === 'pen' ? 'neg' : 'pos'}">${s.kind === 'pen' ? brl(-s.amount) : brl(s.amount, true)}</span></div>`;
   });
   const runKm = ms.km ? `<div class="st"><span>📍</span><div><b>Distância corrida</b><small>Strava</small></div><span class="sv">${num(ms.km)} km</span></div>` : '';
   return `<div class="stats">${rows.join('')}${runKm}</div>`;
@@ -127,7 +127,7 @@ export function dayDetail(app, date) {
   if (b.joker) h += `<p class="hint">🧊 Coringa usado neste dia.</p>`;
   h += b.recurring.map((x) => line(x.h.emoji, x.h.name, x.done ? brl(x.amount, true) : x.madeUp ? `reposto (${['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'][weekday(x.madeUp)]})` : 'não fez', x.done ? 'pos' : 'off')).join('');
   h += b.makeups.filter((m) => !m.covers).map((m) => line(m.h.emoji, `${m.h.name} extra`, 'registrado')).join('');
-  h += b.extras.filter((x) => x.n).map((x) => line(x.h.emoji, `${x.h.name} ×${x.n}`, brl(x.amount, true), 'pos')).join('');
+  h += b.extras.filter((x) => x.n).map((x) => line(x.h.emoji, x.h.type === 'tiers' ? `${x.h.name} (${x.h.tiers[x.n - 1].label})` : `${x.h.name} ×${x.n}`, brl(x.amount, true), 'pos')).join('');
   h += b.bonuses.map((x) => line(x.emoji, x.label, brl(x.amount, true), 'pos')).join('');
   h += b.penalties.filter((x) => x.n).map((x) => line(x.h.emoji, x.h.type === 'tiers' ? `${x.h.name} (${x.h.tiers[x.n - 1].label})` : x.h.type === 'toggle' ? x.h.name : `${x.h.name} ×${x.n}`, brl(-x.amount), 'neg')).join('');
   if (runs.length) h += runs.map((r) => line('📍', `${r.name} · ${num(r.km)} km`, `${r.min} min`)).join('');
