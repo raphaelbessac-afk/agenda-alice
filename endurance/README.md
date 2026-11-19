@@ -4,7 +4,7 @@ App web instalável (PWA) para gamificar a saúde: hábitos saudáveis rendem re
 
 ## Regras padrão
 - Pote de R$ 300 por mês. Corrida (seg, qua, sex, sáb), academia (ter, qui) e salada no jantar (todo dia) dividem o pote por peso 6 : 9 : 4, recalculado a cada mês para o mês perfeito somar exatamente R$ 300.
-- Extras: consulta/exame +R$ 40, ler 30 min +R$ 8.
+- Extras: consulta/exame +R$ 40, ler 10 páginas +R$ 8, meditação 10/15/20 min +R$ 3/5/7.
 - Deslizes: biscoito recheado −25, cerveja −25, pizza −15, fritura −6, vinho 1 taça −10 / 2+ −25, dormir depois da meia-noite −10.
 - Bônus: +R$ 5 a cada 7 saladas seguidas, +R$ 10 por semana perfeita de treinos. 2 coringas por mês.
 - Rotina já vem marcada; edição até 2 dias para trás. Saldo positivo não acumula; negativo é descontado do mês seguinte.
