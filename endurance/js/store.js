@@ -19,7 +19,7 @@ export function fresh() {
     celebrated: {},
     lastBackup: null,
     hideInstall: false,
-    mig: { runFri: true, saladManual: true, trainManual: true, meditation: true },
+    mig: { runFri: true, saladManual: true, trainManual: true, meditation: true, readPages: true },
   };
 }
 
@@ -112,6 +112,15 @@ function migrate(s) {
         r.extras.push({ id: 'meditation', name: 'Meditação', emoji: '🧘', type: 'tiers', tiers: [{ label: '10 min', value: 3 }, { label: '15 min', value: 5 }, { label: '20 min', value: 7 }] });
     }
     s.mig.meditation = true;
+    s._migrated = true;
+  }
+  // v1.6: leitura passa a ser "10 páginas" em vez de "30 min".
+  if (!s.mig.readPages) {
+    for (const r of Object.values(s.rules || {})) {
+      const rd = (r.extras || []).find((h) => h.id === 'reading');
+      if (rd && rd.name === 'Ler 30 min') rd.name = 'Ler 10 páginas';
+    }
+    s.mig.readPages = true;
     s._migrated = true;
   }
   return s;

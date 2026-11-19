@@ -10,7 +10,7 @@ export const MEDALS = [
   { id: 'cookie30', emoji: '🍪', name: 'Adeus, biscoito', desc: '30 dias seguidos sem biscoito recheado.', color: '#FFD23F' },
   { id: 'sleep30', emoji: '😴', name: 'Sono de atleta', desc: '30 noites seguidas dormindo antes da meia-noite.', color: '#6C8BFF' },
   { id: 'zen', emoji: '🧘', name: 'Mente zen', desc: 'Meditar em 15 dias do mesmo mês.', color: '#3DD6F5' },
-  { id: 'reader', emoji: '📚', name: 'Rato de biblioteca', desc: '10 leituras de 30 min no mesmo mês.', color: '#FF9F43' },
+  { id: 'reader', emoji: '📚', name: 'Rato de biblioteca', desc: '10 leituras de 10 páginas no mesmo mês.', color: '#FF9F43' },
   { id: 'goal', emoji: '🥇', name: 'Linha de chegada', desc: 'Bater o pote do mês (R$ 300).', color: '#FFD23F' },
   { id: 'ultra', emoji: '🚀', name: 'Ultramaratona', desc: 'Passar R$ 50 além do pote no mês.', color: '#FF3D8B' },
   { id: 'perfectMonth', emoji: '👑', name: 'Mês perfeito', desc: 'Todos os hábitos recorrentes de um mês inteiro.', color: '#FFD23F' },
