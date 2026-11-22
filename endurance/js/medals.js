@@ -1,6 +1,7 @@
 // Medalhas de conquista, no estilo de medalhas de prova.
 import { timeline, monthSummary, monthsTracked, examStatus } from './engine.js';
-import { todayISO } from './utils.js';
+import { todayISO, addDays, weekday } from './utils.js';
+import { weighings } from './body.js';
 
 export const MEDALS = [
   { id: 'first', emoji: '👟', name: 'Primeiro passo', desc: 'Um dia completo: tudo feito e nenhum deslize.', color: '#3DD6F5' },
@@ -16,6 +17,10 @@ export const MEDALS = [
   { id: 'perfectMonth', emoji: '👑', name: 'Mês perfeito', desc: 'Todos os hábitos recorrentes de um mês inteiro.', color: '#FFD23F' },
   { id: 'nobeer', emoji: '🚱', name: 'Mês sem cerveja', desc: 'Um mês inteiro sem cerveja.', color: '#3DD6F5' },
   { id: 'checkup', emoji: '🩺', name: 'Check-up em dia', desc: 'Todos os exames da lista em dia.', color: '#B8F23A' },
+  { id: 'fat1', emoji: '🔥', name: '−1 kg de gordura', desc: 'Cada kg de massa gorda a menos desde a 1ª pesagem.', color: '#FF6B2C' },
+  { id: 'muscle1', emoji: '💪', name: '+1 kg de músculo', desc: 'Cada kg de massa muscular a mais desde a 1ª pesagem.', color: '#B8F23A' },
+  { id: 'visc7', emoji: '🫀', name: 'Visceral abaixo de 8', desc: 'Uma pesagem com gordura visceral menor que 8.', color: '#FF3D8B' },
+  { id: 'weigh4', emoji: '⚖️', name: '4 semanas pesando', desc: 'Pesar em 4 semanas seguidas.', color: '#3DD6F5' },
   { id: 'km50', emoji: '🏃', name: '50 km no mês', desc: 'Correr 50 km num mês (Strava).', color: '#FF6B2C' },
   { id: 'km100', emoji: '⚡', name: '100 km no mês', desc: 'Correr 100 km num mês (Strava).', color: '#FF3D8B' },
 ];
@@ -70,6 +75,32 @@ export function computeMedals(S) {
       if (ms.stats.beer && ms.stats.beer.n === 0) add('nobeer');
     }
   }
+  // Balança
+  const ws = weighings(S);
+  if (ws.length) {
+    const f0 = ws[0];
+    const lastWith = (k) => [...ws].reverse().find((w) => w[k] != null) || {};
+    const fatDrop = (f0.massa_gorda ?? 0) - Math.min(...ws.map((w) => w.massa_gorda ?? Infinity));
+    const musGain = Math.max(...ws.map((w) => w.massa_muscular ?? -Infinity)) - (f0.massa_muscular ?? 0);
+    if (f0.massa_gorda != null && fatDrop >= 1) res.fat1 = Math.floor(fatDrop + 1e-9);
+    if (f0.massa_muscular != null && musGain >= 1) res.muscle1 = Math.floor(musGain + 1e-9);
+    if (ws.some((w) => w.gordura_visceral != null && w.gordura_visceral < 8)) res.visc7 = 1;
+    const mon = (d) => addDays(d, -((weekday(d) + 6) % 7));
+    const weeks = [...new Set(ws.map((w) => mon(w.data)))].sort();
+    let run = 0, best = 0;
+    weeks.forEach((wk, i) => {
+      run = i && addDays(weeks[i - 1], 7) === wk ? run + 1 : 1;
+      best = Math.max(best, run);
+      if (run && run % 4 === 0) add('weigh4');
+    });
+    prog.fat1 = f0.massa_gorda != null && lastWith('massa_gorda').massa_gorda != null ? `Até agora: ${(f0.massa_gorda - lastWith('massa_gorda').massa_gorda).toFixed(1).replace('.', ',')} kg` : '';
+    prog.muscle1 = f0.massa_muscular != null && lastWith('massa_muscular').massa_muscular != null ? `Até agora: ${(lastWith('massa_muscular').massa_muscular - f0.massa_muscular).toFixed(1).replace('.', ',')} kg` : '';
+    prog.visc7 = lastWith('gordura_visceral').gordura_visceral != null ? `Última: ${lastWith('gordura_visceral').gordura_visceral}` : '';
+    prog.weigh4 = `Sequência: ${run % 4}/4 semanas`;
+  } else {
+    prog.fat1 = prog.muscle1 = prog.visc7 = prog.weigh4 = 'Registre pesagens na aba Corpo';
+  }
+
   const today = todayISO();
   const exams = S.exams || [];
   const okExams = exams.filter((e) => ['ok', 'soon'].includes(examStatus(e, today).state)).length;
