@@ -19,7 +19,9 @@ export function fresh() {
     celebrated: {},
     lastBackup: null,
     hideInstall: false,
-    mig: { runFri: true, saladManual: true, trainManual: true, meditation: true, readPages: true },
+    weighings: {},
+    scale: {},
+    mig: { runFri: true, saladManual: true, trainManual: true, meditation: true, readPages: true, body: true },
   };
 }
 
@@ -121,6 +123,12 @@ function migrate(s) {
       if (rd && rd.name === 'Ler 30 min') rd.name = 'Ler 10 páginas';
     }
     s.mig.readPages = true;
+    s._migrated = true;
+  }
+  // v1.8: balança (bônus de progresso: gordura % e visceral caindo no mês).
+  if (!s.mig.body) {
+    for (const r of Object.values(s.rules || {})) if (r.bonuses && !r.bonuses.body) r.bonuses.body = { fatPct: 15, visceral: 10 };
+    s.mig.body = true;
     s._migrated = true;
   }
   return s;

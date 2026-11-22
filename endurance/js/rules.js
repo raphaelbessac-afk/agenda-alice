@@ -25,6 +25,7 @@ export const DEFAULT_RULES = {
   bonuses: {
     streak: { habit: 'salad', every: 7, value: 5 },
     perfectWeek: { habits: ['run', 'gym'], value: 10 },
+    body: { fatPct: 15, visceral: 10 },
     jokers: 2,
   },
 };

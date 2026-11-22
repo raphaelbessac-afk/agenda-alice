@@ -34,6 +34,7 @@ function valuesTable(S) {
   const bon = `
     <tr><td>🔥 ${b.streak.every} dias seguidos de salada</td><td>bônus</td><td class="pos">+${brl(b.streak.value)}</td></tr>
     <tr><td>🏁 Semana perfeita de treinos</td><td>bônus</td><td class="pos">+${brl(b.perfectWeek.value)}</td></tr>
+    ${b.body ? `<tr><td>⚖️ Gordura % caiu no mês</td><td>bônus</td><td class="pos">+${brl(b.body.fatPct)}</td></tr><tr><td>🫀 Gordura visceral caiu no mês</td><td>bônus</td><td class="pos">+${brl(b.body.visceral)}</td></tr>` : ''}
     <tr><td>🧊 Coringas por mês</td><td></td><td>${b.jokers}</td></tr>`;
   const pending = S.rules[nextYm()];
   return `
@@ -89,6 +90,8 @@ function ruleEditor(app) {
       <label>ganha R$ ${inp('bonuses.streak.value', d.bonuses.streak.value, 'min="0"')}</label></div>
       <div class="ed-row"><label>🏁 Semana perfeita R$ ${inp('bonuses.perfectWeek.value', d.bonuses.perfectWeek.value, 'min="0"')}</label>
       <label>🧊 Coringas/mês ${inp('bonuses.jokers', d.bonuses.jokers, 'min="0"')}</label></div>
+      ${d.bonuses.body ? `<div class="ed-row"><label>⚖️ Gordura % caiu no mês R$ ${inp('bonuses.body.fatPct', d.bonuses.body.fatPct, 'min="0"')}</label>
+      <label>🫀 Visceral caiu no mês R$ ${inp('bonuses.body.visceral', d.bonuses.body.visceral, 'min="0"')}</label></div>` : ''}
     </div>
     <h3 class="sec">Novo hábito</h3>
     <div class="ed new">
@@ -194,7 +197,7 @@ export function renderSettings(app) {
     <li>Saldo que sobra não acumula. <b>Saldo negativo</b> é descontado do mês seguinte.</li>
     <li>Contando desde ${fmtDateLong(S.setup.startDate)}.</li></ul></section>`;
   html += `<section class="card danger-zone"><button class="btn ghost block danger" data-act="reset">Apagar tudo e recomeçar</button></section>`;
-  html += `<p class="ver">Endurance · v1.7</p>`;
+  html += `<p class="ver">Endurance · v1.8</p>`;
   return html;
 }
 

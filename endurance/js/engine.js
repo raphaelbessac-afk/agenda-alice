@@ -1,6 +1,7 @@
 // Motor de cálculo: valores do mês, avaliação de cada dia, bônus, saldo e projeção.
 import { addDays, addMonths, daysInMonth, diffDays, monthEnd, monthStart, pad, todayISO, weekday, ymOf, WD_LONG } from './utils.js';
 import { RUN_TYPES, GYM_TYPES } from './rules.js';
+import { monthProgress } from './body.js';
 
 export function rulesFor(S, ym) {
   const keys = Object.keys(S.rules).sort();
@@ -166,6 +167,14 @@ export function timeline(S) {
         days[ex.d].bonuses.push({ id: `makeup-${id}`, emoji: '🔁', label: `Reposição: ${miss.x.h.name.toLowerCase()} de ${WD_LONG[weekday(miss.d)]}`, amount: miss.x.value });
       });
     }
+  }
+
+  // Balança: bônus de progresso do mês (1ª × última pesagem), no dia da última pesagem.
+  const yms = new Set(Object.values(S.weighings || {}).map((w) => w && w.data && w.data.slice(0, 7)).filter(Boolean));
+  for (const ym of yms) {
+    const cfg = rulesFor(S, ym).bonuses.body;
+    const mp = monthProgress(S, ym, cfg);
+    for (const it of mp.items) if (it.ok && days[it.day]) days[it.day].bonuses.push({ id: it.id, emoji: it.emoji, label: it.label, amount: it.amount });
   }
 
   // Semana perfeita: conta o treino reposto na mesma semana (ex.: corrida de sábado feita no domingo).

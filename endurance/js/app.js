@@ -10,10 +10,12 @@ import * as Strava from './strava.js';
 import { renderToday, todayActions, todayInputs } from './views/today.js';
 import { renderHistory, historyActions } from './views/history.js';
 import { renderMedals } from './views/medals.js';
+import { renderBody, bodyActions } from './views/body.js';
+import { fetchFeed } from './body.js';
 import { renderSettings, settingsActions, settingsInputs } from './views/settings.js';
 import { renderOnboarding, closingActions } from './views/closing.js';
 
-const TABS = ['hoje', 'historico', 'medalhas', 'ajustes'];
+const TABS = ['hoje', 'historico', 'corpo', 'medalhas', 'ajustes'];
 
 const app = {
   S: load(),
@@ -34,7 +36,7 @@ app.render = function render() {
   }
   tabs.hidden = false;
   const t = app.ui.tab;
-  const html = t === 'historico' ? renderHistory(app) : t === 'medalhas' ? renderMedals(app) : t === 'ajustes' ? renderSettings(app) : renderToday(app);
+  const html = t === 'historico' ? renderHistory(app) : t === 'corpo' ? renderBody(app) : t === 'medalhas' ? renderMedals(app) : t === 'ajustes' ? renderSettings(app) : renderToday(app);
   view.innerHTML = html;
   view.dataset.tab = t;
   tabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
@@ -243,6 +245,7 @@ const actions = {
   ...settingsActions,
   ...closingActions,
   ...cloudActions,
+  ...bodyActions,
   go(app, el) {
     app.go(el.dataset.tab);
     if (el.dataset.anchor) setTimeout(() => document.getElementById(el.dataset.anchor)?.scrollIntoView({ behavior: 'smooth' }), 50);
@@ -312,7 +315,26 @@ document.addEventListener('visibilitychange', () => {
   app.render();
   maybeSync();
 });
+async function pullScale() {
+  try {
+    const got = await fetchFeed(app.S);
+    if (!got.length) return;
+    app.commit((S) => {
+      S.weighings = S.weighings || {};
+      S.scale.seen = S.scale.seen || {};
+      for (const g of got) {
+        S.weighings[g.id] = g.w;
+        S.scale.seen[g.id] = g.mark;
+      }
+    });
+    toast(`⚖️ ${got.length === 1 ? 'Nova pesagem importada' : `${got.length} pesagens importadas`}!`, { kind: 'good' });
+  } catch (e) {
+    /* offline ou arquivo indisponível */
+  }
+}
+
 function maybeSync() {
+  pullScale();
   const st = app.S.strava;
   if (st && st.token && (!st.lastSync || Date.now() - st.lastSync > 30 * 60000)) app.stravaSync(false);
 }

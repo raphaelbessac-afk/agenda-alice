@@ -1,9 +1,9 @@
 // Service worker: guarda o app para funcionar offline.
-const VERSION = 'endurance-v10';
+const VERSION = 'endurance-v11';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/utils.js', 'js/rules.js', 'js/store.js', 'js/engine.js', 'js/medals.js',
-  'js/strava.js', 'js/files.js', 'js/fx.js', 'js/cloud.js', 'js/firebase-config.js', 'js/views/cloudui.js',
+  'js/strava.js', 'js/files.js', 'js/fx.js', 'js/cloud.js', 'js/firebase-config.js', 'js/views/cloudui.js', 'js/body.js', 'js/views/body.js',
   'js/views/today.js', 'js/views/history.js', 'js/views/medals.js', 'js/views/settings.js', 'js/views/closing.js',
   'icons/icon.svg', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
