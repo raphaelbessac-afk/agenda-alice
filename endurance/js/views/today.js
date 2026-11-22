@@ -150,7 +150,7 @@ function weekProgress(S, date) {
     if (sched.length) {
       total += sched.length;
       if (b && d <= today) {
-        const ok = b.recurring.filter((x) => habits.bonuses.perfectWeek.habits.includes(x.h.id) && x.done).length;
+        const ok = b.recurring.filter((x) => habits.bonuses.perfectWeek.habits.includes(x.h.id) && (x.done || x.madeUp)).length;
         done += ok;
         st = ok === sched.length ? 'ok' : 'miss';
         if (d === today && ok === sched.length) st = 'ok today';

@@ -138,25 +138,6 @@ export function timeline(S) {
     }
     b.streak = streak;
 
-    const pw = r.bonuses.perfectWeek;
-    if (pw && pw.value > 0 && weekday(d) === 0) {
-      const mon = addDays(d, -6);
-      if (mon >= start) {
-        let ok = true;
-        let any = false;
-        for (let i = 0; i < 7; i++) {
-          const bb = i === 6 ? b : days[addDays(mon, i)];
-          for (const x of bb.recurring) {
-            if (pw.habits.includes(x.h.id)) {
-              any = true;
-              if (!x.done) ok = false;
-            }
-          }
-        }
-        if (ok && any) b.bonuses.push({ id: 'week', emoji: '🏁', label: 'Semana perfeita de treinos', amount: pw.value });
-      }
-    }
-
     days[d] = b;
     order.push(d);
   }
@@ -185,6 +166,26 @@ export function timeline(S) {
         days[ex.d].bonuses.push({ id: `makeup-${id}`, emoji: '🔁', label: `Reposição: ${miss.x.h.name.toLowerCase()} de ${WD_LONG[weekday(miss.d)]}`, amount: miss.x.value });
       });
     }
+  }
+
+  // Semana perfeita: conta o treino reposto na mesma semana (ex.: corrida de sábado feita no domingo).
+  for (const d of order) {
+    const b = days[d];
+    const pw = b.rules.bonuses.perfectWeek;
+    if (!pw || !(pw.value > 0) || weekday(d) !== 0) continue;
+    const mon = addDays(d, -6);
+    if (mon < start) continue;
+    let ok = true;
+    let any = false;
+    for (let i = 0; i < 7; i++) {
+      for (const x of days[addDays(mon, i)].recurring) {
+        if (pw.habits.includes(x.h.id)) {
+          any = true;
+          if (!x.done && !x.madeUp) ok = false;
+        }
+      }
+    }
+    if (ok && any) b.bonuses.push({ id: 'week', emoji: '🏁', label: 'Semana perfeita de treinos', amount: pw.value });
   }
 
   for (const d of order) {
