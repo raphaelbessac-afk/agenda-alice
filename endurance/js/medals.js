@@ -21,8 +21,8 @@ export const MEDALS = [
   { id: 'muscle1', emoji: '💪', name: '+1 kg de músculo', desc: 'Cada kg de massa muscular a mais desde a 1ª pesagem.', color: '#B8F23A' },
   { id: 'visc7', emoji: '🫀', name: 'Visceral abaixo de 8', desc: 'Uma pesagem com gordura visceral menor que 8.', color: '#FF3D8B' },
   { id: 'weigh4', emoji: '⚖️', name: '4 semanas pesando', desc: 'Pesar em 4 semanas seguidas.', color: '#3DD6F5' },
-  { id: 'km50', emoji: '🏃', name: '50 km no mês', desc: 'Correr 50 km num mês (Strava).', color: '#FF6B2C' },
-  { id: 'km100', emoji: '⚡', name: '100 km no mês', desc: 'Correr 100 km num mês (Strava).', color: '#FF3D8B' },
+  { id: 'km50', emoji: '🏃', name: '50 km no mês', desc: 'Correr 50 km num mês (Garmin).', color: '#FF6B2C' },
+  { id: 'km100', emoji: '⚡', name: '100 km no mês', desc: 'Correr 100 km num mês (Garmin).', color: '#FF3D8B' },
   { id: 'walk8', emoji: '👫', name: 'Casal em movimento', desc: '8 caminhadas com a esposa no mesmo mês.', color: '#FF9F43' },
 
   // Constância: premiam manter o que já deu medalha
@@ -180,7 +180,7 @@ export function computeMedals(S) {
   prog.goal = `Este mês: ${Math.max(0, Math.round((cur.balance / cur.pool) * 100))}%`;
   prog.ultra = prog.goal;
   prog.checkup = `${okExams}/${exams.length} exames em dia`;
-  prog.km50 = S.strava?.token ? `Este mês: ${cur.km.toFixed(1).replace('.', ',')} km` : 'Conecte o Strava';
+  prog.km50 = S.strava?.token || S.garmin?.lastSync ? `Este mês: ${cur.km.toFixed(1).replace('.', ',')} km` : 'Sincronize o Garmin';
   prog.km100 = prog.km50;
   prog.week = 'Feche uma semana sem falhar';
   prog.perfectMonth = 'Termine um mês sem desmarcar nada';

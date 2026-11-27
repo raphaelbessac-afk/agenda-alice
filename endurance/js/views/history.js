@@ -70,7 +70,7 @@ function statsBlock(S, ym) {
     const arrow = delta === null || delta === 0 ? '' : s.kind === 'pen' ? (delta < 0 ? `<em class="good">▼${-delta}</em>` : `<em class="bad">▲${delta}</em>`) : delta > 0 ? `<em class="good">▲${delta}</em>` : `<em class="bad">▼${-delta}</em>`;
     return `<div class="st ${s.kind}"><span>${s.h.emoji}</span><div><b>${esc(s.h.name)}</b><small>${s.h.type === 'tiers' ? `${s.days} ${s.days === 1 ? 'dia' : 'dias'}` : `${s.n}×`} ${arrow}</small></div><span class="sv ${s.kind === 'pen' ? 'neg' : 'pos'}">${s.kind === 'pen' ? brl(-s.amount) : brl(s.amount, true)}</span></div>`;
   });
-  const runKm = ms.km ? `<div class="st"><span>📍</span><div><b>Distância corrida</b><small>Strava</small></div><span class="sv">${num(ms.km)} km</span></div>` : '';
+  const runKm = ms.km ? `<div class="st"><span>📍</span><div><b>Distância corrida</b><small>relógio</small></div><span class="sv">${num(ms.km)} km</span></div>` : '';
   return `<div class="stats">${rows.join('')}${runKm}</div>`;
 }
 

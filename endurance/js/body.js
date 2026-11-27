@@ -95,17 +95,22 @@ export async function decryptEntry(privJwk, entry) {
 }
 
 // Busca o arquivo de pesagens e importa as novas ou alteradas. Devolve a lista importada.
-export async function fetchFeed(S) {
+export function fetchFeed(S) {
+  return fetchEncrypted(S, 'data/pesagens.json', (S.scale || {}).seen);
+}
+
+// Busca um arquivo criptografado (pesagens, Garmin...) e abre as entradas novas ou alteradas.
+export async function fetchEncrypted(S, file, seen) {
   const sc = S.scale || {};
   if (!sc.priv || !navigator.onLine) return [];
-  const r = await fetch('data/pesagens.json', { cache: 'no-store' });
+  const r = await fetch(file, { cache: 'no-store' });
   if (!r.ok) return [];
   const feed = await r.json();
   const out = [];
   for (const e of feed.entries || []) {
     if (!e || !e.id || !e.k) continue;
     const mark = e.k.slice(0, 24);
-    if (sc.seen && (sc.seen[e.id] === mark || sc.seen[e.id] === 'apagada')) continue;
+    if (seen && (seen[e.id] === mark || seen[e.id] === 'apagada')) continue;
     try {
       const w = await decryptEntry(sc.priv, e);
       out.push({ id: e.id, w, mark });

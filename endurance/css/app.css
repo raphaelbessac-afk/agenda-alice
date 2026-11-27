@@ -565,3 +565,6 @@ pre.code { background: rgba(0, 0, 0, 0.35); border-radius: 12px; padding: 10px; 
 .code-box.small { font-size: 10px; max-height: 120px; overflow: auto; text-align: left; }
 .card.setup { border-color: rgba(61, 214, 245, 0.4); background: linear-gradient(135deg, rgba(61, 214, 245, 0.12), rgba(139, 108, 255, 0.1)); }
 .card.empty { text-align: center; }
+
+.tag.garmin { background: #007cc3; color: #fff; }
+.sv-logo.garmin { background: linear-gradient(135deg, #007cc3, #00b2e3); }
