@@ -134,6 +134,25 @@ function examsSheet(app) {
   <button class="btn ghost block" data-act="ex-add">+ Adicionar exame</button></div>`;
 }
 
+function garminSection(app) {
+  const S = app.S;
+  const g = S.garmin || {};
+  const acts = Object.entries(g.acts || {});
+  const ym = ymOf(todayISO());
+  const mon = acts.filter(([d]) => d.startsWith(ym)).flatMap(([, a]) => a);
+  const runs = mon.filter((a) => a.type === 'Run');
+  const km = runs.reduce((s, a) => s + a.km, 0);
+  const when = g.lastSync ? new Date(g.lastSync).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : null;
+  let h = '';
+  if (!S.scale || !S.scale.priv) h += `<p class="hint">⚠️ Primeiro ative o recebimento criptografado na aba <b>Corpo</b> (botão "Ativar").</p>`;
+  h += when
+    ? `<div class="strava-ok"><span class="sv-logo garmin">⌚</span><div><b>Sincronizado em ${esc(when)}</b><small>Em ${monthName(ym)}: ${mon.length} atividades · ${runs.length} corridas · ${num(km)} km</small></div></div>`
+    : `<p class="cloud-st">⚪ Ainda não sincronizado</p>`;
+  h += `<p class="hint">O Claude lê o seu Garmin pelo conector e envia as atividades <b>criptografadas</b> para o app (só este app consegue abrir). Elas aparecem como etiquetas nos cartões: corrida, academia, meditação (respiração) e caminhada. Você continua marcando à mão.</p>
+  <p class="hint">Para atualizar: numa conversa do Claude Code com o repositório <b>agenda-alice</b>, peça <i>"sincroniza o Garmin"</i>.</p>`;
+  return h;
+}
+
 function stravaSection(app) {
   const st = app.S.strava || {};
   const host = location.hostname;
@@ -180,7 +199,8 @@ export function renderSettings(app) {
       return `<div class="ex ${s.state}"><span>${e.emoji}</span><b>${esc(e.name)}</b><small>${s.state === 'none' ? 'sem registro' : s.state === 'late' ? 'vencido' : s.state === 'soon' ? `vence em ${s.days}d` : 'em dia ✓'}</small></div>`;
     })
     .join('')}<button class="btn ghost block" data-act="ex-open">Editar exames</button></section>`;
-  html += `<section class="card"><h3><span class="sv-logo sm">S</span> Strava</h3>${stravaSection(app)}</section>`;
+  html += `<section class="card" id="garmin"><h3><span class="sv-logo sm garmin">G</span> Garmin</h3>${garminSection(app)}</section>`;
+  if (S.strava && S.strava.token) html += `<section class="card"><h3><span class="sv-logo sm">S</span> Strava (antigo)</h3><p class="hint">Agora as atividades vêm do Garmin. Pode desconectar o Strava.</p><button class="btn ghost block danger" data-act="st-off">Desconectar Strava</button></section>`;
   html += `<section class="card"><h3>⏰ Lembretes</h3><p class="hint">Apps web no iPhone não conseguem agendar notificações sozinhos. A solução: adicionar lembretes recorrentes ao seu Calendário, com alarme.</p>
     <div class="rems">${rem
       .map((r, i) => `<label class="rem"><input type="checkbox" data-in="rem" data-i="${i}" data-k="on" ${r.on ? 'checked' : ''}><span>${esc(r.title)}</span><input type="time" data-in="rem" data-i="${i}" data-k="time" value="${r.time}"></label>`)
@@ -197,7 +217,7 @@ export function renderSettings(app) {
     <li>Saldo que sobra não acumula. <b>Saldo negativo</b> é descontado do mês seguinte.</li>
     <li>Contando desde ${fmtDateLong(S.setup.startDate)}.</li></ul></section>`;
   html += `<section class="card danger-zone"><button class="btn ghost block danger" data-act="reset">Apagar tudo e recomeçar</button></section>`;
-  html += `<p class="ver">Endurance · v1.9</p>`;
+  html += `<p class="ver">Endurance · v2.0</p>`;
   return html;
 }
 

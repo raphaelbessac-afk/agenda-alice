@@ -11,7 +11,7 @@ import { renderToday, todayActions, todayInputs } from './views/today.js';
 import { renderHistory, historyActions } from './views/history.js';
 import { renderMedals } from './views/medals.js';
 import { renderBody, bodyActions } from './views/body.js';
-import { fetchFeed } from './body.js';
+import { fetchFeed, fetchEncrypted } from './body.js';
 import { renderSettings, settingsActions, settingsInputs } from './views/settings.js';
 import { renderOnboarding, closingActions } from './views/closing.js';
 
@@ -333,8 +333,32 @@ async function pullScale() {
   }
 }
 
+async function pullGarmin() {
+  try {
+    const got = await fetchEncrypted(app.S, 'data/garmin.json', app.S.garmin?.seen);
+    if (!got.length) return;
+    let n = 0;
+    app.commit((S) => {
+      const g = (S.garmin = S.garmin || {});
+      g.acts = g.acts || {};
+      g.seen = g.seen || {};
+      for (const { id, w, mark } of got) {
+        for (const d of Object.keys(g.acts)) if (d.startsWith(w.month)) delete g.acts[d];
+        Object.assign(g.acts, w.acts || {});
+        n += Object.values(w.acts || {}).flat().length;
+        g.lastSync = Math.max(g.lastSync || 0, w.syncedAt || 0);
+        g.seen[id] = mark;
+      }
+    });
+    toast(`⌚ Garmin atualizado: ${n} atividades.`, { kind: 'good' });
+  } catch (e) {
+    /* offline ou arquivo indisponível */
+  }
+}
+
 function maybeSync() {
   pullScale();
+  pullGarmin();
   const st = app.S.strava;
   if (st && st.token && (!st.lastSync || Date.now() - st.lastSync > 30 * 60000)) app.stravaSync(false);
 }

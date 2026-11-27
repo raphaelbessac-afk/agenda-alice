@@ -48,10 +48,13 @@ export function monthValues(S, ym) {
   return memo.vals.get(ym);
 }
 
+// Atividades do dia vindas do Garmin (e do Strava antigo, se houver).
 export function stravaActs(S, date, types) {
-  const a = S.strava?.acts?.[date];
-  return a ? a.filter((x) => types.includes(x.type)) : [];
+  const a = [...(S.garmin?.acts?.[date] || []), ...(S.strava?.acts?.[date] || [])];
+  return a.filter((x) => types.includes(x.type));
 }
+export const dayActs = (S, date, types) => stravaActs(S, date, types);
+export const actSrc = (acts) => (acts[0] && acts[0].src === 'garmin' ? 'Garmin' : 'Strava');
 export const stravaRuns = (S, date) => stravaActs(S, date, RUN_TYPES);
 export const stravaGym = (S, date) => stravaActs(S, date, GYM_TYPES);
 

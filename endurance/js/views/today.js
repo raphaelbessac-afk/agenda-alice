@@ -1,6 +1,6 @@
 // Tela "Hoje": dashboard do mês + marcação do dia.
 import { brl, clamp, daysInMonth, esc, relDay, fmtDay, monthName, cap, todayISO, ymOf, weekday, addDays, WD_LETTER, num, diffDays, WD_LONG } from '../utils.js';
-import { timeline, monthSummary, canEdit, editableDates, jokersLeft, pendingClosings, examStatus, stravaRuns, stravaGym } from '../engine.js';
+import { timeline, monthSummary, canEdit, editableDates, jokersLeft, pendingClosings, examStatus, stravaRuns, stravaGym, dayActs, actSrc } from '../engine.js';
 import { burst, floatText, centerOf, toast } from '../fx.js';
 
 export function hero(S, ms, { compact = false } = {}) {
@@ -53,8 +53,8 @@ function dayChips(S, sel) {
 function recCard(S, x, date) {
   const runs = x.h.id === 'run' ? stravaRuns(S, date) : x.h.id === 'gym' ? stravaGym(S, date) : [];
   const km = runs.reduce((a, r) => a + r.km, 0);
-  const strava = runs.length ? `<span class="tag strava">Strava ✓ ${x.h.id === 'run' ? `${num(km)} km` : `${runs[0].min} min`}</span>` : '';
-  const auto = x.autoOff ? `<span class="tag muted">sem corrida no Strava</span>` : '';
+  const strava = runs.length ? `<span class="tag ${actSrc(runs).toLowerCase()}">${actSrc(runs)} ✓ ${x.h.id === 'run' ? `${num(km)} km` : `${runs[0].min} min`}</span>` : '';
+  const auto = x.autoOff ? `<span class="tag muted">sem corrida no relógio</span>` : '';
   return `
   <button class="habit rec ${x.done ? 'done' : x.pending ? 'todo' : 'off'}" data-act="toggle" data-id="${x.h.id}" aria-pressed="${x.done}">
     <span class="hi">${x.h.emoji}</span>
@@ -66,7 +66,7 @@ function recCard(S, x, date) {
 function makeupCard(S, b, h, date) {
   const m = b.makeups.find((y) => y.h.id === h.id);
   const acts = h.id === 'run' ? stravaRuns(S, date) : h.id === 'gym' ? stravaGym(S, date) : [];
-  const strava = acts.length ? `<span class="tag strava">Strava ✓ ${h.id === 'run' ? `${num(acts.reduce((a, r) => a + r.km, 0))} km` : `${acts[0].min} min`}</span>` : '';
+  const strava = acts.length ? `<span class="tag ${actSrc(acts).toLowerCase()}">${actSrc(acts)} ✓ ${h.id === 'run' ? `${num(acts.reduce((a, r) => a + r.km, 0))} km` : `${acts[0].min} min`}</span>` : '';
   const txt = !m
     ? 'fez hoje? toque para registrar'
     : m.covers
@@ -80,11 +80,21 @@ function makeupCard(S, b, h, date) {
   </button>`;
 }
 
-function extraCard(x) {
+const EXTRA_ACTS = { meditation: ['Breathwork'], walk: ['Walk'] };
+function actTagFor(S, date, id) {
+  const acts = EXTRA_ACTS[id] ? dayActs(S, date, EXTRA_ACTS[id]) : [];
+  if (!acts.length) return '';
+  const min = acts.reduce((a, r) => a + (r.min || 0), 0);
+  const km = acts.reduce((a, r) => a + (r.km || 0), 0);
+  return `<span class="tag ${actSrc(acts).toLowerCase()}">${actSrc(acts)} ✓ ${km ? `${num(km)} km · ` : ''}${min} min</span>`;
+}
+
+function extraCard(x, S, date) {
+  const tag = S ? actTagFor(S, date, x.h.id) : '';
   if (x.h.type === 'tiers') {
     return `
   <div class="habit extra tiers ${x.n ? 'has' : ''}">
-    <div class="row-top"><span class="hi">${x.h.emoji}</span><span class="hn"><b>${esc(x.h.name)}</b><small>${x.n ? `<em>${brl(x.amount, true)}</em>` : 'opcional · escolha o tempo'}</small></span></div>
+    <div class="row-top"><span class="hi">${x.h.emoji}</span><span class="hn"><b>${esc(x.h.name)}</b><small>${x.n ? `<em>${brl(x.amount, true)}</em>` : 'opcional · escolha o tempo'} ${tag}</small></span></div>
     <div class="seg good">
       <button class="${x.n === 0 ? 'on' : ''}" data-act="tier" data-id="${x.h.id}" data-v="0">Não</button>
       ${x.h.tiers.map((t, i) => `<button class="${x.n === i + 1 ? 'on good' : ''}" data-act="tier" data-id="${x.h.id}" data-v="${i + 1}">${esc(t.label)}<small>+${brl(t.value)}</small></button>`).join('')}
@@ -94,7 +104,7 @@ function extraCard(x) {
   return `
   <div class="habit extra ${x.n ? 'has' : ''}">
     <span class="hi">${x.h.emoji}</span>
-    <span class="hn"><b>${esc(x.h.name)}</b><small>+${brl(x.h.value)} cada${x.n ? ` · <em>${brl(x.amount, true)}</em>` : ''}</small></span>
+    <span class="hn"><b>${esc(x.h.name)}</b><small>+${brl(x.h.value)} cada${x.n ? ` · <em>${brl(x.amount, true)}</em>` : ''} ${tag}</small></span>
     <div class="stepper">
       <button data-act="dec" data-id="${x.h.id}" ${x.n ? '' : 'disabled'} aria-label="Remover">−</button>
       <b>${x.n}</b>
@@ -236,7 +246,7 @@ export function renderToday(app) {
   if (shownBonuses.length)
     html += `<div class="list">${shownBonuses.map((x) => `<div class="habit bonus"><span class="hi">${x.emoji}</span><span class="hn"><b>${esc(x.label)}</b><small>bônus</small></span><span class="amt">${brl(x.amount, true)}</span></div>`).join('')}</div>`;
 
-  html += `<h3 class="sec">Extras <small>dinheiro a mais</small></h3><div class="list">${b.extras.map(extraCard).join('')}</div>`;
+  html += `<h3 class="sec">Extras <small>dinheiro a mais</small></h3><div class="list">${b.extras.map((x) => extraCard(x, S, date)).join('')}</div>`;
   html += `<h3 class="sec">Deslizes <small>toque para registrar</small></h3><div class="pens">${b.penalties.map(penaltyTile).join('')}</div>`;
 
   html += `
