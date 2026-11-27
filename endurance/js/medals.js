@@ -23,6 +23,26 @@ export const MEDALS = [
   { id: 'weigh4', emoji: '⚖️', name: '4 semanas pesando', desc: 'Pesar em 4 semanas seguidas.', color: '#3DD6F5' },
   { id: 'km50', emoji: '🏃', name: '50 km no mês', desc: 'Correr 50 km num mês (Strava).', color: '#FF6B2C' },
   { id: 'km100', emoji: '⚡', name: '100 km no mês', desc: 'Correr 100 km num mês (Strava).', color: '#FF3D8B' },
+  { id: 'walk8', emoji: '👫', name: 'Casal em movimento', desc: '8 caminhadas com a esposa no mesmo mês.', color: '#FF9F43' },
+
+  // Constância: premiam manter o que já deu medalha
+  { sec: 'const', id: 'full7', emoji: '🌟', name: 'Semana impecável', desc: '7 dias completos seguidos: tudo feito, nenhum deslize.', color: '#3DD6F5', streak: 'full', n: 7 },
+  { sec: 'const', id: 'full14', emoji: '💎', name: 'Quinzena impecável', desc: '14 dias completos seguidos.', color: '#8B6CFF', streak: 'full', n: 14 },
+  { sec: 'const', id: 'week2', emoji: '🏃', name: 'Ritmo de prova', desc: '2 semanas perfeitas de treino seguidas.', color: '#FF6B2C', streak: 'pw', n: 2 },
+  { sec: 'const', id: 'week4', emoji: '🏅', name: 'Mês de atleta', desc: '4 semanas perfeitas de treino seguidas.', color: '#FFD23F', streak: 'pw', n: 4 },
+  { sec: 'const', id: 'week8', emoji: '🏆', name: 'Maratonista', desc: '8 semanas perfeitas de treino seguidas.', color: '#FF3D8B', streak: 'pw', n: 8 },
+  { sec: 'const', id: 'clean14', emoji: '🧼', name: 'Quinzena limpa', desc: '14 dias seguidos sem nenhum deslize.', color: '#8B6CFF', streak: 'clean', n: 14 },
+  { sec: 'const', id: 'clean30', emoji: '🕊️', name: 'Mês limpo', desc: '30 dias seguidos sem nenhum deslize.', color: '#3DD6F5', streak: 'clean', n: 30 },
+  { sec: 'const', id: 'salad60', emoji: '🥬', name: 'Horta em casa', desc: '60 saladas seguidas no jantar.', color: '#B8F23A', streak: 'salad', n: 60 },
+  { sec: 'const', id: 'salad100', emoji: '🌳', name: 'Floresta', desc: '100 saladas seguidas no jantar.', color: '#B8F23A', streak: 'salad', n: 100 },
+  { sec: 'const', id: 'zen7', emoji: '🌬️', name: 'Respira', desc: 'Meditar 7 dias seguidos.', color: '#3DD6F5', streak: 'zen', n: 7 },
+  { sec: 'const', id: 'zen30', emoji: '🪷', name: 'Monge', desc: 'Meditar 30 dias seguidos.', color: '#8B6CFF', streak: 'zen', n: 30 },
+  { sec: 'const', id: 'read7', emoji: '📖', name: 'Leitor diário', desc: 'Ler 10 páginas 7 dias seguidos.', color: '#FF9F43', streak: 'read', n: 7 },
+  { sec: 'const', id: 'walk4w', emoji: '🚶', name: 'Parceiros de caminhada', desc: 'Caminhar com a esposa em 4 semanas seguidas.', color: '#FF9F43', streak: 'walkw', n: 4 },
+  { sec: 'const', id: 'weigh8', emoji: '📉', name: '8 semanas pesando', desc: 'Pesar em 8 semanas seguidas.', color: '#3DD6F5', streak: 'weigh', n: 8 },
+  { sec: 'const', id: 'weigh12', emoji: '📊', name: 'Trimestre na balança', desc: 'Pesar em 12 semanas seguidas.', color: '#8B6CFF', streak: 'weigh', n: 12 },
+  { sec: 'const', id: 'goal2', emoji: '🥈', name: 'Bicampeão', desc: 'Bater o pote do mês 2 meses seguidos.', color: '#FFD23F', streak: 'goal', n: 2 },
+  { sec: 'const', id: 'goal3', emoji: '🏆', name: 'Tricampeão', desc: 'Bater o pote do mês 3 meses seguidos.', color: '#FFD23F', streak: 'goal', n: 3 },
 ];
 
 export function computeMedals(S) {
@@ -32,9 +52,37 @@ export function computeMedals(S) {
   const add = (id) => (res[id] = (res[id] || 0) + 1);
   const T = timeline(S);
   let first = false;
-  const st = { cookie: 0, sleep: 0, clean: 0, salad: 0 };
+  const st = { cookie: 0, sleep: 0, clean: 0, salad: 0, full: 0, zen: 0, read: 0, pw: 0, walkw: 0, weigh: 0, goal: 0 };
+  const best = {};
+  const hit = (k) => {
+    best[k] = Math.max(best[k] || 0, st[k]);
+    for (const m of MEDALS) if (m.streak === k && st[k] === m.n) add(m.id);
+  };
+  const today = todayISO();
+  const start = S.setup.startDate;
+  const walkWeeks = new Set();
   for (const d of T.order) {
     const b = T.days[d];
+    const pendingToday = d === today && b.recurring.some((x) => x.pending);
+    if (!pendingToday) {
+      st.full = b.status === 'perfect' && b.recurring.length ? st.full + 1 : 0;
+      hit('full');
+    }
+    const ex = (id) => b.extras.find((x) => x.h.id === id);
+    for (const [k, id] of [['zen', 'meditation'], ['read', 'reading']]) {
+      const x = ex(id);
+      if (x && x.n) {
+        st[k]++;
+        hit(k);
+      } else if (d !== today) st[k] = 0;
+    }
+    if (ex('walk') && ex('walk').n) walkWeeks.add(addDays(d, -((weekday(d) + 6) % 7)));
+    if (weekday(d) === 0 && addDays(d, -6) >= start) {
+      if (b.bonuses.some((x) => x.id === 'week')) {
+        st.pw++;
+        hit('pw');
+      } else if (d !== today) st.pw = 0;
+    }
     if (b.status === 'perfect' && b.recurring.length) first = true;
     const pen = (id) => b.penalties.find((x) => x.h.id === id);
     const ck = pen('cookie');
@@ -49,19 +97,32 @@ export function computeMedals(S) {
     }
     st.clean = b.lost > 0 ? 0 : st.clean + 1;
     if (st.clean && st.clean % 7 === 0) add('clean7');
+    hit('clean');
     const sa = b.recurring.find((x) => x.h.id === 'salad');
-    if (sa) {
-      if (!sa.pending) st.salad = sa.done ? st.salad + 1 : 0;
+    if (sa && !sa.pending) {
+      st.salad = sa.done ? st.salad + 1 : 0;
       if (st.salad && st.salad % 30 === 0) add('salad30');
+      hit('salad');
     }
     if (b.bonuses.some((x) => x.id === 'week')) add('week');
   }
   if (first) res.first = 1;
 
+  [...walkWeeks].sort().forEach((wk, i, arr) => {
+    st.walkw = i && addDays(arr[i - 1], 7) === wk ? st.walkw + 1 : 1;
+    hit('walkw');
+  });
+  if (walkWeeks.size && ![...walkWeeks].some((wk) => wk >= addDays(today, -13))) st.walkw = 0;
+
   let bestReading = 0, bestKm = 0;
   for (const ym of monthsTracked(S)) {
     const ms = monthSummary(S, ym);
-    if (ms.balance >= ms.pool - 0.005) add('goal');
+    if (ms.balance >= ms.pool - 0.005) {
+      add('goal');
+      st.goal++;
+      hit('goal');
+    } else if (ms.complete) st.goal = 0;
+    if (ms.stats.walk && ms.stats.walk.n >= 8) add('walk8');
     if (ms.balance >= ms.pool + 50 - 0.005) add('ultra');
     const reading = ms.stats.reading ? ms.stats.reading.n : 0;
     bestReading = Math.max(bestReading, reading);
@@ -92,7 +153,10 @@ export function computeMedals(S) {
       run = i && addDays(weeks[i - 1], 7) === wk ? run + 1 : 1;
       best = Math.max(best, run);
       if (run && run % 4 === 0) add('weigh4');
+      st.weigh = run;
+      hit('weigh');
     });
+    if (weeks.length && weeks[weeks.length - 1] < addDays(mon(today), -7)) st.weigh = 0;
     prog.fat1 = f0.massa_gorda != null && lastWith('massa_gorda').massa_gorda != null ? `Até agora: ${(f0.massa_gorda - lastWith('massa_gorda').massa_gorda).toFixed(1).replace('.', ',')} kg` : '';
     prog.muscle1 = f0.massa_muscular != null && lastWith('massa_muscular').massa_muscular != null ? `Até agora: ${(lastWith('massa_muscular').massa_muscular - f0.massa_muscular).toFixed(1).replace('.', ',')} kg` : '';
     prog.visc7 = lastWith('gordura_visceral').gordura_visceral != null ? `Última: ${lastWith('gordura_visceral').gordura_visceral}` : '';
@@ -101,7 +165,6 @@ export function computeMedals(S) {
     prog.fat1 = prog.muscle1 = prog.visc7 = prog.weigh4 = 'Registre pesagens na aba Corpo';
   }
 
-  const today = todayISO();
   const exams = S.exams || [];
   const okExams = exams.filter((e) => ['ok', 'soon'].includes(examStatus(e, today).state)).length;
   if (exams.length && okExams === exams.length) res.checkup = 1;
@@ -122,5 +185,7 @@ export function computeMedals(S) {
   prog.week = 'Feche uma semana sem falhar';
   prog.perfectMonth = 'Termine um mês sem desmarcar nada';
   prog.nobeer = 'Termine um mês sem cerveja';
+  prog.walk8 = `Este mês: ${cur.stats.walk ? cur.stats.walk.n : 0}/8`;
+  for (const m of MEDALS) if (m.streak) prog[m.id] = `${st[m.streak] >= m.n ? `🔥 ${st[m.streak]} seguidos agora` : `Atual: ${st[m.streak]}/${m.n}`}${best[m.streak] ? ` · recorde ${best[m.streak]}` : ''}`;
   return { res, prog, best: { bestReading, bestKm } };
 }

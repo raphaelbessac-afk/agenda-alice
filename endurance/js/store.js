@@ -21,7 +21,7 @@ export function fresh() {
     hideInstall: false,
     weighings: {},
     scale: {},
-    mig: { runFri: true, saladManual: true, trainManual: true, meditation: true, readPages: true, body: true },
+    mig: { runFri: true, saladManual: true, trainManual: true, meditation: true, readPages: true, body: true, walk: true },
   };
 }
 
@@ -129,6 +129,17 @@ function migrate(s) {
   if (!s.mig.body) {
     for (const r of Object.values(s.rules || {})) if (r.bonuses && !r.bonuses.body) r.bonuses.body = { fatPct: 15, visceral: 10 };
     s.mig.body = true;
+    s._migrated = true;
+  }
+  // v1.9: caminhada com a esposa (extra diário, valendo já neste mês).
+  if (!s.mig.walk) {
+    for (const r of Object.values(s.rules || {})) {
+      if (r.extras && !r.extras.some((h) => h.id === 'walk')) {
+        const i = r.extras.findIndex((h) => h.id === 'meditation');
+        r.extras.splice(i >= 0 ? i : r.extras.length, 0, { id: 'walk', name: 'Caminhada com a esposa', emoji: '👫', value: 3, max: 1 });
+      }
+    }
+    s.mig.walk = true;
     s._migrated = true;
   }
   return s;
